@@ -10,6 +10,7 @@ dev = ["pytest>=8.0", "ruff>=0.5"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: loads a real model (needs cached weights)"]
 
 [tool.ruff]
 line-length = 130

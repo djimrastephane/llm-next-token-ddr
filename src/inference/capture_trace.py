@@ -8,6 +8,7 @@ Example:
 
 import argparse
 import json
+import math
 import platform
 import random
 import sys
@@ -23,7 +24,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from .device import select_device
 from .sampling import decide
 from .schemas import SCHEMA_VERSION, validate_trace
-from .tokenizer_utils import describe_token
+from .tokenizer_utils import describe_token, incremental_texts
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONTEXTS = ROOT / "data" / "input" / "ddr_contexts.json"
@@ -56,7 +57,13 @@ def parse_args(argv=None):
     p.add_argument("--context-id", help="id from data/input/ddr_contexts.json")
     p.add_argument("--contexts-file", default=str(DEFAULT_CONTEXTS))
     p.add_argument("--output", default=str(DEFAULT_OUTPUT))
-    p.add_argument("--display-top-k", type=int, default=10, help="candidates exported per step (plus the full nucleus)")
+    p.add_argument("--display-top-k", type=int, default=10, help="candidates exported per step (plus the nucleus)")
+    p.add_argument(
+        "--max-export",
+        type=int,
+        default=1000,
+        help="cap on exported nucleus candidates per step; a larger nucleus is marked nucleus_complete=false",
+    )
     p.add_argument("--device", default="auto", help="auto | cuda | mps | cpu")
     p.add_argument("--dtype", choices=list(DTYPES), default="float32")
     p.add_argument("--no-save-logits", action="store_true", help="skip the full-vocabulary .npz sidecar")
@@ -64,7 +71,13 @@ def parse_args(argv=None):
 
     if args.steps < 1:
         p.error("--steps must be >= 1")
+    if args.max_export < 1:
+        p.error("--max-export must be >= 1")
     if args.mode == "sampling":
+        if not math.isfinite(args.temperature):
+            p.error(f"--temperature must be a finite number (got {args.temperature})")
+        if not math.isfinite(args.top_p):
+            p.error(f"--top-p must be a finite number (got {args.top_p})")
         if args.temperature == 0:
             p.error("--temperature 0 would divide by zero. Temperature 0 means deterministic decoding: use --mode greedy.")
         if args.temperature < 0:
@@ -88,7 +101,8 @@ def load_context(args) -> dict:
     cid = args.context_id or data["default_context_id"]
     for c in data["contexts"]:
         if c["id"] == cid:
-            return {**c, "synthetic": True}
+            # Provenance comes from the file (entry, then file-level flag); unknown stays None, never assumed.
+            return {"facts": {}, **c, "synthetic": c.get("synthetic", data.get("synthetic"))}
     sys.exit(f"context id {cid!r} not found in {args.contexts_file}. Available: {[c['id'] for c in data['contexts']]}")
 
 
@@ -114,25 +128,34 @@ ABBREVIATIONS = frozenset(
 )
 
 
-def ends_sentence(text: str) -> bool:
-    """True if the generated text so far ends a sentence: a newline, or . ! ? at the end.
+def ends_sentence(generated: str, prompt: str = "") -> bool:
+    """True if the generated text so far ends a sentence: a generated newline, or . ! ? at the end.
 
     A period does not count after a DDR abbreviation ("in.") or a digit ("3." may be a decimal point),
-    so generation continues rather than claiming a truncated sentence is complete.
+    so generation continues rather than claiming a truncated sentence is complete. The word before the
+    period may come from the prompt ("...8½ in" + generated "."), so the prompt is taken into account;
+    only generated text can supply the newline or the final punctuation.
     Decided before looking at any output.
     """
-    if "\n" in text:
+    if "\n" in generated:
         return True
-    t = text.rstrip(" ")
-    if t.endswith(("!", "?")):
-        return True
-    if not t.endswith("."):
+    g = generated.rstrip(" ")
+    if not g:
         return False
-    before = t[:-1]
+    if g.endswith(("!", "?")):
+        return True
+    if not g.endswith("."):
+        return False
+    before = (prompt + g)[:-1]
     if before[-1:].isdigit():
         return False
-    last_word = before.split()[-1].lower() if before.split() else ""
-    return last_word not in ABBREVIATIONS
+    words = before.split()
+    return not words or words[-1].lower() not in ABBREVIATIONS
+
+
+def export_count(display_top_k: int, nucleus_size: int | None, selected_rank: int, max_export: int) -> int:
+    """How many ranked candidates to export: the display set, the nucleus up to max_export, and the selection."""
+    return max(display_top_k, min(nucleus_size or 0, max_export), selected_rank)
 
 
 def seed_everything(seed: int) -> np.random.Generator:
@@ -195,9 +218,8 @@ def main(argv=None):
         d = decide(raw, args.mode, args.temperature, args.top_p, rng)
         probs_for_rank = d.temperature_probs
         n_nucleus = int(d.nucleus.sum()) if d.nucleus is not None else None
-        n_export = max(args.display_top_k, n_nucleus or 0)
         selected_rank = int(np.where(d.order == d.selected_id)[0][0]) + 1
-        n_export = max(n_export, selected_rank)  # always include the selected token
+        n_export = export_count(args.display_top_k, n_nucleus, selected_rank, args.max_export)
 
         cum = np.cumsum(probs_for_rank[d.order[:n_export]])
         candidates = [candidate_record(tokenizer, d, int(tid), r + 1, float(cum[r])) for r, tid in enumerate(d.order[:n_export])]
@@ -217,6 +239,7 @@ def main(argv=None):
                 "vocab_size": int(raw.shape[0]),
                 "forward_ms": round(forward_ms, 1),
                 "nucleus_size": n_nucleus,
+                "nucleus_complete": (n_export >= n_nucleus) if n_nucleus is not None else None,
                 "nucleus_temperature_mass": float(d.temperature_probs[d.nucleus].sum()) if d.nucleus is not None else None,
                 "omitted_model_probability_mass": max(omitted_model, 0.0),
                 "omitted_temperature_probability_mass": max(omitted_temp, 0.0),
@@ -230,6 +253,7 @@ def main(argv=None):
                         "decoded_token",
                         "display_token",
                         "is_special",
+                        "in_tokenizer",
                         "raw_logit",
                         "model_probability",
                         "temperature_probability",
@@ -249,9 +273,13 @@ def main(argv=None):
         if d.selected_id in eos_ids:
             stop_reason = "eos"
             break
-        if args.until_sentence_end and ends_sentence(tokenizer.decode(generated)):
+        if args.until_sentence_end and ends_sentence(tokenizer.decode(generated), ctx["text"]):
             stop_reason = "sentence_end"
             break
+
+    # Text each step appended, robust to characters split across tokens (F4).
+    for st, piece in zip(steps, incremental_texts(tokenizer, generated)):
+        st["appended_text"] = piece
 
     sampling = args.mode == "sampling"
     trace = {

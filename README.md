@@ -2,7 +2,7 @@
 
 **When an LLM writes the next part of a drilling report, how does it decide what comes next?**
 
-This project answers that with a real experiment, not an illustration. A language model runs locally on a laptop. We give it the start of a Daily Drilling Report (DDR) entry, record exactly what it computes at each step, and turn that recording into a 60-second vertical video (1080 × 1920, 60 fps).
+This project answers that with a real experiment, not an illustration. A language model runs locally on a laptop. We give it the start of a Daily Drilling Report (DDR) entry, record exactly what it computes at each step, and turn that recording into a short vertical video (1080 × 1920, 60 fps). Its length follows the number of generated tokens: about 50 s for the current 2-token run, up to about 60 s for 10 tokens.
 
 > **All token candidates, probabilities, rankings, and selections shown in this project are captured from an actual local LLM inference run. They are not manually authored for the animation.**
 
@@ -85,14 +85,17 @@ Implementation notes (verified, not assumed):
 
 `--prompt-mode raw-text` (default) feeds the DDR text as-is. `--prompt-mode chat-template` wraps it with the tokenizer's official chat template (system + user instruction), placing the DDR text at the start of the assistant turn so the model continues it. **Different prompt formatting gives a different probability distribution.** With the chat template, step 1 picks ` stable` (54.7%) instead of ` constant` (31.0% in raw-text mode). The trace always stores both `display_context` (what viewers see) and `actual_model_input` (the exact decoded model input, including any special tokens), and flags which input tokens belong to the DDR text.
 
-### Trace format (`data/generated/inference_trace.json`, schema 1.0)
+### Trace format (`data/generated/inference_trace.json`, schema 1.1)
 
-- `metadata`: model, revision, device, dtype, modes, temperature, top_p, seed, versions, and the exact method used for each quantity
-- `display_context`, `actual_model_input`, `input_tokens[]` (id, raw tokenizer string, exact decoded text, UI-safe display text)
-- `steps[]`, each with `context_before`/`context_after`, `nucleus_size`, omitted probability mass, and `top_candidates[]`: the top 10 **plus the entire nucleus**, each with `raw_logit`, `scaled_logit`, `model_probability`, `temperature_probability`, `cumulative_probability`, `inside_top_p`, `sampling_probability`, `selected`
+- `metadata`: model, revision, `tokenizer_vocab_size`, device, dtype, modes, temperature, top_p, seed, versions, and the exact method used for each quantity
+- `source_context.synthetic`: `true` only when the contexts file declares it; `null` for `--context` text or files that don't say. The video labels the text accordingly and never assumes "synthetic".
+- `display_context`, `actual_model_input`, `input_tokens[]` (id, raw tokenizer string, exact decoded text, UI-safe display text, `in_tokenizer`)
+- `steps[]`, each with `context_before`/`context_after`, `appended_text` (the text this step added; a character split across tokens, such as an emoji, is credited to the token that completes it), `nucleus_size`, `nucleus_complete`, omitted probability mass, and `top_candidates[]`: the top 10 **plus the nucleus** (up to `--max-export`, default 1,000) **plus the selected token**, each with `raw_logit`, `scaled_logit`, `model_probability`, `temperature_probability`, `cumulative_probability`, `inside_top_p`, `sampling_probability`, `selected`
 - `selected_token` and `generated_text`
 
-The full-vocabulary logits for every step are saved next to the trace as `*.logits.npz` (git-ignored), and the tests recompute every JSON probability from them. The trace is validated on write (`src/inference/schemas.py`) and again on load in the video (`src/video/data/loadInferenceTrace.ts`).
+A very large nucleus (for example top-p = 1.0, where every one of the 151,936 output rows is eligible) is exported only up to `--max-export` and marked `nucleus_complete: false`; the maths still runs over the full vocabulary. Output rows beyond the tokenizer (padding) are exported with `in_tokenizer: false` and empty text rather than an invented token string. Schema 1.0 traces are rejected with a message to re-capture.
+
+The full-vocabulary logits for every step are saved next to the trace as `*.logits.npz` (git-ignored), and the tests recompute every JSON probability from them. The trace is validated on write (`src/inference/schemas.py`) and again on load in the video (`src/video/data/loadInferenceTrace.ts`). Validation checks structure and consistency: probabilities must follow from the recorded logits, the selected token must match its candidate record, all numbers must be finite, and the per-step text must reproduce the generated text.
 
 ---
 
@@ -103,7 +106,7 @@ The full-vocabulary logits for every step are saved next to the trace as `*.logi
 ```bash
 # Python 3.11+
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-# Node 18+ (22 used here)
+# Node 22.12+ (required by the locked Vitest; 22.18 used here)
 npm install
 ```
 
@@ -113,6 +116,7 @@ npm install
 
 ```bash
 scripts/capture_trace.sh          # sampling trace (drives the video) + greedy trace, same context
+OUT_DIR=/tmp/run scripts/capture_trace.sh   # write both traces elsewhere (--output is refused: it would make one overwrite the other)
 ```
 
 or directly:
@@ -125,7 +129,7 @@ python -m src.inference.capture_trace --mode greedy --steps 40 --until-sentence-
 | Change… | Flag |
 |---|---|
 | DDR example | `--context-id completions_packer` (see `data/input/ddr_contexts.json`) |
-| Custom DDR text | `--context "Drilled 8½ in. hole section…"` |
+| Custom DDR text | `--context "Drilled 8½ in. hole section…"` (labelled "custom input, provenance not recorded" in the video) |
 | Model | `--model Qwen/Qwen2.5-0.5B-Instruct` (any HF causal LM) |
 | Temperature / top-p / seed | `--temperature 0.9 --top-p 0.95 --seed 7` |
 | Greedy vs sampling | `--mode greedy` / `--mode sampling` |
@@ -145,8 +149,9 @@ node scripts/render_stills.mjs 1200 2800   # QA stills → out/stills/
 ### Tests and checks
 
 ```bash
-.venv/bin/python -m pytest        # 59 tests: maths, top-p vs Hugging Face, tokenization, schema, recompute from logits, no hard-coded video data
-npm test                          # loader serves the trace unchanged and rejects tampered traces
+.venv/bin/python -m pytest        # 87 tests: maths, top-p vs Hugging Face, tokenization, schema and tamper detection, recompute from logits,
+                                  #   review regressions (incl. one top-p = 1 capture with the cached 0.5B model; deselect with -m 'not slow')
+npm test                          # 9 tests: loader serves the trace unchanged, rejects old/tampered traces, keeps low-ranked selections visible
 npm run typecheck && npm run lint && .venv/bin/ruff check src tests
 ```
 

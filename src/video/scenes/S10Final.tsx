@@ -1,7 +1,7 @@
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { Card } from "../components/Card";
 import { Tag } from "../components/Tag";
-import { meta, trace } from "../data/loadInferenceTrace";
+import { meta, provenance, trace } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { C, FONT_MONO, FONT_UI, PAD } from "../utils/theme";
 import { sceneFrames } from "../utils/timeline";
@@ -81,7 +81,7 @@ export const S10Final: React.FC = () => {
           <span style={{ color: C.magenta, fontWeight: 700 }}>{trace.generated_text}</span>
         </div>
         <div style={{ fontSize: 22, color: C.dim, marginTop: 10, opacity: prog(f, 200, 20) }}>
-          Synthetic DDR example. {STOP_NOTE[meta.stop_reason] ?? "Generation stopped"} after {meta.steps_generated} tokens.
+          {provenance.sentence} {STOP_NOTE[meta.stop_reason] ?? "Generation stopped"} after {meta.steps_generated} tokens.
         </div>
         {HAS_NUMBERS && (
           <Tag style={{ marginTop: 16, fontSize: 20, whiteSpace: "normal", lineHeight: 1.4, ...rise(f, 200) }}>

@@ -68,6 +68,17 @@ def _special_ids(tokenizer) -> frozenset[int]:
 
 def describe_token(tokenizer, token_id: int) -> dict:
     raw = tokenizer.convert_ids_to_tokens(token_id)
+    if raw is None:
+        # The model's output layer can be wider than the tokenizer (padding rows). Such a row has a score
+        # but no text; say so rather than inventing a token string.
+        return {
+            "token_id": int(token_id),
+            "raw_token": "",
+            "decoded_token": "",
+            "display_token": f"⟨unused id {token_id}⟩",
+            "is_special": False,
+            "in_tokenizer": False,
+        }
     decoded = tokenizer.decode([token_id], skip_special_tokens=False, clean_up_tokenization_spaces=False)
     is_special = token_id in _special_ids(tokenizer)
     return {
@@ -76,4 +87,21 @@ def describe_token(tokenizer, token_id: int) -> dict:
         "decoded_token": decoded,
         "display_token": display_token(decoded, raw, is_special),
         "is_special": bool(is_special),
+        "in_tokenizer": True,
     }
+
+
+def incremental_texts(tokenizer, ids: list[int]) -> list[str]:
+    """Text each generated token adds to the context, in order.
+
+    A character split across tokens (e.g. an emoji) is credited to the token that completes it, and the
+    fragment tokens add "". The pieces concatenate to decode(ids), minus an incomplete trailing character.
+    """
+    out, prev = [], ""
+    for n in range(1, len(ids) + 1):
+        stable = tokenizer.decode(ids[:n]).rstrip("\ufffd")  # hold back an incomplete trailing character
+        if not stable.startswith(prev):
+            raise ValueError(f"decoding is not append-only at token {n}: {prev!r} -> {stable!r}")
+        out.append(stable[len(prev) :])
+        prev = stable
+    return out

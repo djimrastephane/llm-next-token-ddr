@@ -87,7 +87,8 @@ def test_trace_stops_exactly_at_sentence_end(sampling_trace):
     from src.inference.capture_trace import ends_sentence
 
     if sampling_trace["metadata"].get("until_sentence_end"):
-        texts = [s["context_after"][len(sampling_trace["display_context"]) :] for s in sampling_trace["steps"]]
-        ends = [ends_sentence(t) for t in texts]
+        prompt = sampling_trace["display_context"]
+        texts = [s["context_after"][len(prompt) :] for s in sampling_trace["steps"]]
+        ends = [ends_sentence(t, prompt) for t in texts]
         assert ends[-1] == (sampling_trace["metadata"]["stop_reason"] == "sentence_end")
         assert not any(ends[:-1])  # nothing ended the sentence earlier

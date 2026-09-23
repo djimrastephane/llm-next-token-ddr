@@ -6,7 +6,7 @@ import { SceneTitle } from "../components/SceneTitle";
 import { SelectionClaw } from "../components/SelectionClaw";
 import { Tag } from "../components/Tag";
 import { TokenText } from "../components/TokenText";
-import { firstStep, meta, trace } from "../data/loadInferenceTrace";
+import { firstStep, meta, trace, withSelected } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { clawPath, clawSlot } from "../utils/claw";
 import { axisMax, pct } from "../utils/format";
@@ -28,7 +28,7 @@ const Stat: React.FC<{ label: string; value: string; color?: string }> = ({ labe
 
 export const S7Selection: React.FC = () => {
   const f = useCurrentFrame();
-  const eligible = firstStep.top_candidates.filter((c) => c.inside_top_p);
+  const eligible = withSelected(firstStep.top_candidates.filter((c) => c.inside_top_p), 8);
   const sel = firstStep.selected_token;
   const selIdx = eligible.findIndex((c) => c.selected);
   const lock = prog(f, LOCK, 20);

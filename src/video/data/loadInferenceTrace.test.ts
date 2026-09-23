@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { displayCandidates, firstStep, loadInferenceTrace, trace } from "./loadInferenceTrace";
+import { appendedTexts, displayCandidates, firstStep, loadInferenceTrace, provenance, provenanceFor, trace, withSelected } from "./loadInferenceTrace";
 
 const file = JSON.parse(readFileSync("data/generated/inference_trace.json", "utf-8"));
 
@@ -29,5 +29,54 @@ describe("loadInferenceTrace", () => {
     const bad2 = structuredClone(file);
     bad2.steps[0].top_candidates.reverse();
     expect(() => loadInferenceTrace(bad2)).toThrow();
+  });
+});
+
+// Second-pass review regressions (R1, F2, F3, F4, F5).
+describe("review regressions", () => {
+  it("R1: rejects a schema-1.0 trace up front instead of crashing in a scene", () => {
+    const old = structuredClone(file);
+    old.schema_version = "1.0";
+    delete old.metadata.tokenizer_vocab_size;
+    expect(() => loadInferenceTrace(old)).toThrow(/schema_version/);
+  });
+
+  it("F2: rejects contradictory selected token, negative probability, negative temperature", () => {
+    const a = structuredClone(file);
+    a.steps[0].selected_token.display_token = "␠tampered";
+    expect(() => loadInferenceTrace(a)).toThrow(/contradicts/);
+    const b = structuredClone(file);
+    b.steps[0].top_candidates[3].model_probability = -0.1;
+    expect(() => loadInferenceTrace(b)).toThrow();
+    const c = structuredClone(file);
+    c.metadata.temperature = -0.7;
+    expect(() => loadInferenceTrace(c)).toThrow(/temperature/);
+  });
+
+  it("F3: a selection ranked below the bar limit stays visible", () => {
+    const cands = Array.from({ length: 12 }, (_, i) => ({ ...file.steps[0].top_candidates[0], rank: i + 1, token_id: i, selected: i === 8 }));
+    const shown = withSelected(cands, 8);
+    expect(shown).toHaveLength(8);
+    expect(shown.findIndex((c) => c.selected)).toBe(7);
+    expect(shown[7].rank).toBe(9);
+    expect(withSelected(cands, 10)).toEqual(cands.slice(0, 10));
+  });
+
+  it("F4: context growth comes from appended_text, which reproduces the generated text", () => {
+    expect(appendedTexts.join("")).toBe(trace.generated_text);
+    const bad = structuredClone(file);
+    bad.steps[0].appended_text = " stable";
+    expect(() => loadInferenceTrace(bad)).toThrow(/appended_text/);
+  });
+
+  it("F5: provenance label follows the trace, never assumed", () => {
+    expect(provenance).toEqual(provenanceFor(file.source_context.synthetic));
+    expect(provenanceFor(true).label).toBe("SYNTHETIC EXAMPLE");
+    expect(provenanceFor(null).label).toMatch(/CUSTOM INPUT/);
+    expect(provenanceFor(null).sentence).not.toMatch(/Synthetic/);
+    expect(provenanceFor(false).label).not.toMatch(/SYNTHETIC/);
+    const custom = structuredClone(file);
+    custom.source_context.synthetic = "yes";
+    expect(() => loadInferenceTrace(custom)).toThrow(/synthetic/);
   });
 });

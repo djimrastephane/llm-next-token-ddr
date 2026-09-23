@@ -1,9 +1,6 @@
-import { ddrFacts, trace } from "../data/loadInferenceTrace";
+import { appendedTexts, ddrFacts, provenance, trace } from "../data/loadInferenceTrace";
 import { C, FONT_MONO, FONT_UI } from "../utils/theme";
 import { Card } from "./Card";
-
-/** Text each generated step appended, taken from the trace's own context strings. */
-export const appendedTexts: string[] = trace.steps.map((s) => s.context_after.slice(s.context_before.length));
 
 const [factKey, factValue] = Object.entries(ddrFacts)[0] ?? [null, null];
 
@@ -33,7 +30,7 @@ export const ContextDisplay: React.FC<{
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, gap: 16 }}>
         <div style={{ fontFamily: FONT_MONO, fontSize: 19, letterSpacing: 1.5, color: C.muted, fontWeight: 700 }}>
           DAILY DRILLING REPORT
-          <div style={{ color: C.amber }}>SYNTHETIC EXAMPLE</div>
+          <div style={{ color: C.amber }}>{provenance.label}</div>
         </div>
         {showFact && factKey && (
           <div style={{ fontFamily: FONT_MONO, textAlign: "right", whiteSpace: "nowrap" }}>

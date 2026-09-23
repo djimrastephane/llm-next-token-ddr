@@ -50,7 +50,18 @@ export const TopPNucleus: React.FC<{ candidates: Candidate[]; topP: number; reve
         <div style={{ position: "absolute", left: topP * width - 2, top: -12, bottom: -12, width: 4, background: C.magenta, boxShadow: `0 0 16px ${C.magenta}` }} />
       </div>
       <div style={{ position: "relative", height: 34, marginTop: 8 }}>
-        <span style={{ position: "absolute", right: width - topP * width - 90, fontSize: 22, color: C.magenta, fontWeight: 700 }}>
+        <span
+          style={{
+            position: "absolute",
+            // centred under the threshold line, but kept inside the meter when top_p is close to 0 or 1
+            left: Math.min(Math.max(topP * width - 90, 0), width - 180),
+            width: 180,
+            textAlign: "center",
+            fontSize: 22,
+            color: C.magenta,
+            fontWeight: 700,
+          }}
+        >
           p = {topP.toFixed(2)}
         </span>
       </div>

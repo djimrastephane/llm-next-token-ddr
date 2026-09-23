@@ -1,4 +1,4 @@
-// Mirrors the Python trace written by src/inference/capture_trace.py (schema 1.0).
+// Mirrors the Python trace written by src/inference/capture_trace.py (schema 1.1).
 
 export type TokenInfo = {
   token_id: number;
@@ -6,6 +6,7 @@ export type TokenInfo = {
   decoded_token: string;
   display_token: string;
   is_special: boolean;
+  in_tokenizer: boolean; // false for output rows with no token (padding)
 };
 
 export type InputToken = TokenInfo & { position: number; in_display_context: boolean };
@@ -36,12 +37,14 @@ export type Step = {
   vocab_size: number;
   forward_ms: number;
   nucleus_size: number | null;
+  nucleus_complete: boolean | null; // false when only a prefix of a very large nucleus was exported
   nucleus_temperature_mass: number | null;
   omitted_model_probability_mass: number;
   omitted_temperature_probability_mass: number;
   top_candidates: Candidate[];
   selected_token: SelectedToken;
   context_after: string;
+  appended_text: string; // text this step added (a split character is credited to the token completing it)
 };
 
 export type Metadata = {

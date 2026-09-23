@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "metadata": {
     "model": "Qwen/Qwen2.5-1.5B-Instruct",
     "model_display_name": "Qwen2.5-1.5B-Instruct",
@@ -17,7 +17,7 @@
     "stop_reason": "sentence_end",
     "until_sentence_end": true,
     "display_top_k": 10,
-    "created_at": "2026-09-23T21:44:36+00:00",
+    "created_at": "2026-09-23T22:11:24+00:00",
     "versions": {
       "python": "3.11.9",
       "torch": "2.14.0",
@@ -56,6 +56,7 @@
       "decoded_token": "Dr",
       "display_token": "Dr",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -65,6 +66,7 @@
       "decoded_token": "illed",
       "display_token": "illed",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -74,6 +76,7 @@
       "decoded_token": " ",
       "display_token": "␠",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -83,6 +86,7 @@
       "decoded_token": "8",
       "display_token": "8",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -92,6 +96,7 @@
       "decoded_token": "½",
       "display_token": "½",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -101,6 +106,7 @@
       "decoded_token": " in",
       "display_token": "␠in",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -110,6 +116,7 @@
       "decoded_token": ".",
       "display_token": ".",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -119,6 +126,7 @@
       "decoded_token": " hole",
       "display_token": "␠hole",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -128,6 +136,7 @@
       "decoded_token": " section",
       "display_token": "␠section",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -137,6 +146,7 @@
       "decoded_token": " to",
       "display_token": "␠to",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -146,6 +156,7 @@
       "decoded_token": " ",
       "display_token": "␠",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -155,6 +166,7 @@
       "decoded_token": "1",
       "display_token": "1",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -164,6 +176,7 @@
       "decoded_token": "2",
       "display_token": "2",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -173,6 +186,7 @@
       "decoded_token": ",",
       "display_token": ",",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -182,6 +196,7 @@
       "decoded_token": "4",
       "display_token": "4",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -191,6 +206,7 @@
       "decoded_token": "5",
       "display_token": "5",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -200,6 +216,7 @@
       "decoded_token": "0",
       "display_token": "0",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -209,6 +226,7 @@
       "decoded_token": " ft",
       "display_token": "␠ft",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -218,6 +236,7 @@
       "decoded_token": " MD",
       "display_token": "␠MD",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -227,6 +246,7 @@
       "decoded_token": ".",
       "display_token": ".",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -236,6 +256,7 @@
       "decoded_token": " Per",
       "display_token": "␠Per",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -245,6 +266,7 @@
       "decoded_token": "formed",
       "display_token": "formed",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -254,6 +276,7 @@
       "decoded_token": " flow",
       "display_token": "␠flow",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -263,6 +286,7 @@
       "decoded_token": " check",
       "display_token": "␠check",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -272,6 +296,7 @@
       "decoded_token": ",",
       "display_token": ",",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -281,6 +306,7 @@
       "decoded_token": " well",
       "display_token": "␠well",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -290,6 +316,7 @@
       "decoded_token": " static",
       "display_token": "␠static",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -299,6 +326,7 @@
       "decoded_token": ".",
       "display_token": ".",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -308,6 +336,7 @@
       "decoded_token": " Circ",
       "display_token": "␠Circ",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -317,6 +346,7 @@
       "decoded_token": "ulated",
       "display_token": "ulated",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -326,6 +356,7 @@
       "decoded_token": " bottoms",
       "display_token": "␠bottoms",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -335,6 +366,7 @@
       "decoded_token": " up",
       "display_token": "␠up",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -344,6 +376,7 @@
       "decoded_token": ".",
       "display_token": ".",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -353,6 +386,7 @@
       "decoded_token": " Pump",
       "display_token": "␠Pump",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -362,6 +396,7 @@
       "decoded_token": " pressure",
       "display_token": "␠pressure",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     },
     {
@@ -371,6 +406,7 @@
       "decoded_token": " remained",
       "display_token": "␠remained",
       "is_special": false,
+      "in_tokenizer": true,
       "in_display_context": true
     }
   ],
@@ -379,8 +415,9 @@
       "step": 1,
       "context_before": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained",
       "vocab_size": 151936,
-      "forward_ms": 155.6,
+      "forward_ms": 164.4,
       "nucleus_size": 7,
+      "nucleus_complete": true,
       "nucleus_temperature_mass": 0.9108149022490919,
       "omitted_model_probability_mass": 0.21645012119850882,
       "omitted_temperature_probability_mass": 0.05991263518945833,
@@ -392,6 +429,7 @@
           "decoded_token": " constant",
           "display_token": "␠constant",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 22.52724838256836,
           "scaled_logit": 32.18178340366909,
           "model_probability": 0.3103057840084992,
@@ -408,6 +446,7 @@
           "decoded_token": " at",
           "display_token": "␠at",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.525991439819336,
           "scaled_logit": 30.751416342599054,
           "model_probability": 0.11401172210431422,
@@ -424,6 +463,7 @@
           "decoded_token": " stable",
           "display_token": "␠stable",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.395267486572266,
           "scaled_logit": 30.564667837960382,
           "model_probability": 0.10004072122379995,
@@ -440,6 +480,7 @@
           "decoded_token": " steady",
           "display_token": "␠steady",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.2847957611084,
           "scaled_logit": 30.406851087297714,
           "model_probability": 0.08957762697613224,
@@ -456,6 +497,7 @@
           "decoded_token": " high",
           "display_token": "␠high",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 20.47406768798828,
           "scaled_logit": 29.248668125697545,
           "model_probability": 0.03982032724678966,
@@ -472,6 +514,7 @@
           "decoded_token": " the",
           "display_token": "␠the",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 20.403934478759766,
           "scaled_logit": 29.148477826799667,
           "model_probability": 0.037123281538460076,
@@ -488,6 +531,7 @@
           "decoded_token": " ",
           "display_token": "␠",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 20.349658966064453,
           "scaled_logit": 29.070941380092076,
           "model_probability": 0.03516209988867773,
@@ -504,6 +548,7 @@
           "decoded_token": " unchanged",
           "display_token": "␠unchanged",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 19.857999801635742,
           "scaled_logit": 28.36857114519392,
           "model_probability": 0.02150551965665685,
@@ -520,6 +565,7 @@
           "decoded_token": " flat",
           "display_token": "␠flat",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 19.722171783447266,
           "scaled_logit": 28.174531119210382,
           "model_probability": 0.018774162927071528,
@@ -536,6 +582,7 @@
           "decoded_token": " low",
           "display_token": "␠low",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 19.636262893676758,
           "scaled_logit": 28.051804133823943,
           "model_probability": 0.017228633231089672,
@@ -553,19 +600,22 @@
         "decoded_token": " constant",
         "display_token": "␠constant",
         "is_special": false,
+        "in_tokenizer": true,
         "raw_logit": 22.52724838256836,
         "model_probability": 0.3103057840084992,
         "temperature_probability": 0.5195343783156027,
         "sampling_probability": 0.5704061023076225
       },
-      "context_after": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained constant"
+      "context_after": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained constant",
+      "appended_text": " constant"
     },
     {
       "step": 2,
       "context_before": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained constant",
       "vocab_size": 151936,
-      "forward_ms": 62.4,
+      "forward_ms": 61.6,
       "nucleus_size": 6,
+      "nucleus_complete": true,
       "nucleus_temperature_mass": 0.9069652070776316,
       "omitted_model_probability_mass": 0.21432176178539897,
       "omitted_temperature_probability_mass": 0.06131778693975398,
@@ -577,6 +627,7 @@
           "decoded_token": " at",
           "display_token": "␠at",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 23.814281463623047,
           "scaled_logit": 34.020402090890066,
           "model_probability": 0.2675691312653685,
@@ -593,6 +644,7 @@
           "decoded_token": ".",
           "display_token": ".",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 23.770614624023438,
           "scaled_logit": 33.958020891462056,
           "model_probability": 0.25613665944055847,
@@ -609,6 +661,7 @@
           "decoded_token": ",",
           "display_token": ",",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 22.34177017211914,
           "scaled_logit": 31.916814531598774,
           "model_probability": 0.061366659088475724,
@@ -625,6 +678,7 @@
           "decoded_token": " throughout",
           "display_token": "␠throughout",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 22.189525604248047,
           "scaled_logit": 31.699322291782927,
           "model_probability": 0.05270035059646191,
@@ -641,6 +695,7 @@
           "decoded_token": " during",
           "display_token": "␠during",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.983943939208984,
           "scaled_logit": 31.40563419886998,
           "model_probability": 0.042907234289339104,
@@ -657,6 +712,7 @@
           "decoded_token": " and",
           "display_token": "␠and",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.803354263305664,
           "scaled_logit": 31.147648947579523,
           "model_probability": 0.03581800741155245,
@@ -673,6 +729,7 @@
           "decoded_token": " (",
           "display_token": "␠(",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.13396453857422,
           "scaled_logit": 30.191377912248885,
           "model_probability": 0.018339570403503903,
@@ -689,6 +746,7 @@
           "decoded_token": ".\n",
           "display_token": ".↵",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.116390228271484,
           "scaled_logit": 30.166271754673552,
           "model_probability": 0.018020080730730855,
@@ -705,6 +763,7 @@
           "decoded_token": " with",
           "display_token": "␠with",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 21.09271812438965,
           "scaled_logit": 30.132454463413787,
           "model_probability": 0.017598516845499002,
@@ -721,6 +780,7 @@
           "decoded_token": " after",
           "display_token": "␠after",
           "is_special": false,
+          "in_tokenizer": true,
           "raw_logit": 20.947647094726562,
           "scaled_logit": 29.925210135323663,
           "model_probability": 0.015222028143110968,
@@ -738,12 +798,14 @@
         "decoded_token": ".",
         "display_token": ".",
         "is_special": false,
+        "in_tokenizer": true,
         "raw_logit": 23.770614624023438,
         "model_probability": 0.25613665944055847,
         "temperature_probability": 0.37219449602500904,
         "sampling_probability": 0.4103735106049675
       },
-      "context_after": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained constant."
+      "context_after": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained constant.",
+      "appended_text": "."
     }
   ],
   "generated_text": " constant.",

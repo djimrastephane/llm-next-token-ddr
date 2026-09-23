@@ -20,9 +20,9 @@ def softmax(logits: np.ndarray) -> np.ndarray:
 def apply_temperature(logits: np.ndarray, temperature: float) -> np.ndarray:
     """Divide logits by T. T must be > 0; T = 0 would be a division by zero and is handled by the caller
     (greedy decoding is the T -> 0 limit)."""
-    if not temperature > 0:
+    if not (temperature > 0 and np.isfinite(temperature)):
         raise ValueError(
-            f"temperature must be > 0 for sampling (got {temperature}). "
+            f"temperature must be a finite number > 0 for sampling (got {temperature}). "
             "Temperature 0 is the deterministic limit: use --mode greedy instead."
         )
     with np.errstate(over="ignore", divide="ignore", invalid="ignore"):

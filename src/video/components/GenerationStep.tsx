@@ -1,5 +1,5 @@
 import type { Step } from "../data/types";
-import { meta } from "../data/loadInferenceTrace";
+import { loopCandidates, meta } from "../data/loadInferenceTrace";
 import { prog } from "../utils/anim";
 import { clawPath, clawSlot } from "../utils/claw";
 import { axisMax, pct } from "../utils/format";
@@ -15,7 +15,7 @@ import { Tag } from "./Tag";
  */
 export const GenerationStep: React.FC<{ step: Step; frame: number; width: number; barH: number }> = ({ step, frame, width, barH }) => {
   const n = step.nucleus_size ?? 1;
-  const cands = step.top_candidates.slice(0, Math.min(8, Math.max(n + 2, step.selected_token.rank)));
+  const cands = loopCandidates(step);
   const shownEligible = cands.filter((c) => c.inside_top_p).length;
   const selIdx = cands.findIndex((c) => c.selected);
   const bars: BarSpec[] = cands.map((c) => ({

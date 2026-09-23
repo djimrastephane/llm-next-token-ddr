@@ -5,7 +5,7 @@ import { GenerationStep } from "../components/GenerationStep";
 import { SceneTitle } from "../components/SceneTitle";
 import { TokenChip } from "../components/TokenChip";
 import { TokenText } from "../components/TokenText";
-import { trace } from "../data/loadInferenceTrace";
+import { loopCandidates, trace } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { pct } from "../utils/format";
 import { C, CONTENT_W, FONT_MONO, FONT_UI, W } from "../utils/theme";
@@ -92,8 +92,9 @@ export const S8Loop: React.FC = () => {
       </div>
       {later.map((s, i) => {
         const local = designFrame(f - loopStepStart(i), i);
-        const selIdx = s.top_candidates.slice(0, 8).findIndex((c) => c.selected);
-        const shown = Math.min(8, Math.max((s.nucleus_size ?? 1) + 2, s.selected_token.rank));
+        const bars = loopCandidates(s);
+        const selIdx = bars.findIndex((c) => c.selected);
+        const shown = bars.length;
         const x = STAGE_LEFT + ((selIdx + 0.5) * CONTENT_W) / shown;
         return <FlyingToken key={s.step} token={s.selected_token} from={[x, chartTop + 420]} to={CONTEXT_CARD} p={prog(local, 66, 22)} />;
       })}
