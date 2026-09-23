@@ -59,3 +59,20 @@ def test_json_values_recompute_from_full_logits(sampling_trace):
             assert c["model_probability"] == pytest.approx(pm[c["token_id"]], abs=1e-7)
             assert c["temperature_probability"] == pytest.approx(pt[c["token_id"]], abs=1e-7)
         assert np.argsort(-pt, kind="stable")[0] == s["top_candidates"][0]["token_id"]
+
+
+def test_ddr_facts_are_verbatim_in_context_text():
+    """Facts are shown as 'FROM REPORT TEXT', so they must appear exactly in the text."""
+    import json
+
+    from tests.conftest import ROOT
+
+    data = json.loads((ROOT / "data" / "input" / "ddr_contexts.json").read_text(encoding="utf-8"))
+    for c in data["contexts"]:
+        for k, v in c["facts"].items():
+            assert v in c["text"], (c["id"], k, v)
+
+
+def test_trace_records_tokenizer_size(sampling_trace):
+    m = sampling_trace["metadata"]
+    assert 0 < m["tokenizer_vocab_size"] <= sampling_trace["steps"][0]["vocab_size"]

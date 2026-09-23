@@ -108,12 +108,31 @@ def build_input_ids(tokenizer, text: str, prompt_mode: str) -> tuple[list[int], 
     return prefix_ids + text_ids, len(prefix_ids)
 
 
-def ends_sentence(decoded: str) -> bool:
-    """True if a generated token closes a sentence: it ends with . ! ? (ignoring trailing spaces) or holds a newline.
+# Words that DDR text commonly abbreviates with a period ("8½ in. hole"); a period after them is not a sentence end.
+ABBREVIATIONS = frozenset(
+    {"in", "ft", "approx", "est", "bbl", "bbls", "no", "vs", "e.g", "i.e", "min", "max", "avg", "hr", "hrs"}
+)
 
-    Decided before looking at any output; note a decimal point ("3.") would also count.
+
+def ends_sentence(text: str) -> bool:
+    """True if the generated text so far ends a sentence: a newline, or . ! ? at the end.
+
+    A period does not count after a DDR abbreviation ("in.") or a digit ("3." may be a decimal point),
+    so generation continues rather than claiming a truncated sentence is complete.
+    Decided before looking at any output.
     """
-    return "\n" in decoded or decoded.rstrip(" ").endswith((".", "!", "?"))
+    if "\n" in text:
+        return True
+    t = text.rstrip(" ")
+    if t.endswith(("!", "?")):
+        return True
+    if not t.endswith("."):
+        return False
+    before = t[:-1]
+    if before[-1:].isdigit():
+        return False
+    last_word = before.split()[-1].lower() if before.split() else ""
+    return last_word not in ABBREVIATIONS
 
 
 def seed_everything(seed: int) -> np.random.Generator:
@@ -230,7 +249,7 @@ def main(argv=None):
         if d.selected_id in eos_ids:
             stop_reason = "eos"
             break
-        if args.until_sentence_end and ends_sentence(sel["decoded_token"]):
+        if args.until_sentence_end and ends_sentence(tokenizer.decode(generated)):
             stop_reason = "sentence_end"
             break
 
@@ -241,6 +260,7 @@ def main(argv=None):
             "model": args.model,
             "model_display_name": args.model.rstrip("/").split("/")[-1],
             "model_revision": getattr(model.config, "_commit_hash", None),
+            "tokenizer_vocab_size": len(tokenizer),  # logits may have extra unused padding rows beyond this
             "device": device.type,
             "dtype": args.dtype,
             "generation_mode": args.mode,

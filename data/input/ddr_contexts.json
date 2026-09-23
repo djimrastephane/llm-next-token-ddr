@@ -7,7 +7,7 @@
       "category": "drilling",
       "title": "8½ in. section - flow check at section TD",
       "text": "Drilled 8½ in. hole section to 12,450 ft MD. Circulated bottoms up and performed flow check. Pump pressure remained",
-      "facts": { "well_depth": "12,450 ft MD", "hole_size": "8½ in." }
+      "facts": { "hole_depth": "12,450 ft MD", "hole_size": "8½ in." }
     },
     {
       "id": "completions_packer",
@@ -28,7 +28,7 @@
       "category": "well integrity",
       "title": "Sustained annulus pressure check",
       "text": "Monitored B-annulus pressure during 24 hr shut-in. Pressure built up from 150 psi to 420 psi. Bled down annulus and",
-      "facts": { "annulus": "B-annulus", "pressure_range": "150-420 psi" }
+      "facts": { "annulus": "B-annulus", "pressure_range": "150 psi to 420 psi" }
     }
   ]
 }

@@ -34,3 +34,10 @@ def test_only_loader_imports_trace_json():
     imp = re.compile(r"^\s*import .*inference_trace.*\.json", re.M)
     importers = [p for p in _tsx_files() if imp.search(p.read_text(encoding="utf-8")) and p != LOADER]
     assert not importers, f"trace must be accessed via loadInferenceTrace.ts only: {importers}"
+
+
+def test_video_disclaims_generated_numbers():
+    """Generated text can contain engineering numbers; the video must say they are not calculations."""
+    final = (VIDEO / "scenes" / "S10Final.tsx").read_text(encoding="utf-8")
+    assert "NOT A HYDRAULICS CALCULATION OR MEASUREMENT" in final
+    assert "not a calculation" in (VIDEO / "scenes" / "S8Loop.tsx").read_text(encoding="utf-8")

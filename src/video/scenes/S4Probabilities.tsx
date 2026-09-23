@@ -30,7 +30,7 @@ export const S4Probabilities: React.FC = () => {
           <ProbabilityChart bars={bars} width={CONTENT_W} barH={560} axis={axis} grow={(i) => prog(f, 30 + i * 7, 45)} />
         </div>
         <div style={{ ...rise(f, 120), marginTop: 18, fontFamily: FONT_MONO, fontSize: 22, color: C.dim, textAlign: "center" }}>
-          Top {cands.length} of {int(firstStep.vocab_size)} · the other {int(firstStep.vocab_size - cands.length)} share {pct(1 - shownMass)}
+          Top {cands.length} of {int(firstStep.vocab_size)} scores · the other {int(firstStep.vocab_size - cands.length)} share {pct(1 - shownMass)}
         </div>
         <Card style={{ ...rise(f, 160), marginTop: 26, padding: "20px 28px", fontSize: 30, lineHeight: 1.4, color: C.muted }}>
           Softmax only converts scores into probabilities. <b style={{ color: C.text }}>It does not choose the token.</b>{" "}

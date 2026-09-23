@@ -48,6 +48,7 @@ export type Metadata = {
   model: string;
   model_display_name: string;
   model_revision: string | null;
+  tokenizer_vocab_size: number;
   device: string;
   dtype: string;
   generation_mode: "greedy" | "sampling";

@@ -70,14 +70,24 @@ def test_greedy_and_sampling_share_starting_context(sampling_trace, greedy_trace
 def test_ends_sentence_rule():
     from src.inference.capture_trace import ends_sentence
 
-    assert ends_sentence(".") and ends_sentence(" psi.") and ends_sentence("!\n") and ends_sentence("\n")
-    assert not ends_sentence(" psi") and not ends_sentence(",") and not ends_sentence("3")
+    assert ends_sentence(" constant at 3,800 psi.") and ends_sentence(" stable!") and ends_sentence(" ok\n")
+    assert not ends_sentence(" psi") and not ends_sentence(",") and not ends_sentence(" 3")
+
+
+def test_abbreviation_or_decimal_period_does_not_stop():
+    from src.inference.capture_trace import ends_sentence
+
+    assert not ends_sentence(" drilled with 8½ in.")  # tokenizer emits " in" then "." separately
+    assert not ends_sentence(" to 12,450 ft.")
+    assert not ends_sentence(" approx.")
+    assert not ends_sentence(" at 3.")  # possible decimal point
 
 
 def test_trace_stops_exactly_at_sentence_end(sampling_trace):
     from src.inference.capture_trace import ends_sentence
 
     if sampling_trace["metadata"].get("until_sentence_end"):
-        ends = [ends_sentence(s["selected_token"]["decoded_token"]) for s in sampling_trace["steps"]]
+        texts = [s["context_after"][len(sampling_trace["display_context"]) :] for s in sampling_trace["steps"]]
+        ends = [ends_sentence(t) for t in texts]
         assert ends[-1] == (sampling_trace["metadata"]["stop_reason"] == "sentence_end")
         assert not any(ends[:-1])  # nothing ended the sentence earlier

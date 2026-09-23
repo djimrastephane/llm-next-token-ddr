@@ -25,6 +25,7 @@ _CANDIDATE_FIELDS = {
 _METADATA_FIELDS = {
     "model": str,
     "model_display_name": str,
+    "tokenizer_vocab_size": int,
     "device": str,
     "dtype": str,
     "generation_mode": str,

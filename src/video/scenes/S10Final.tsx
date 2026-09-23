@@ -1,5 +1,6 @@
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { Card } from "../components/Card";
+import { Tag } from "../components/Tag";
 import { meta, trace } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { C, FONT_MONO, FONT_UI, PAD } from "../utils/theme";
@@ -19,6 +20,10 @@ const STOP_NOTE: Record<string, string> = {
   eos: "The model emitted end-of-text",
   max_steps: "Generation was capped",
 };
+
+/** Numbers in the generated text (e.g. a pressure) are model output, not engineering results. */
+export const GENERATED_VALUES_NOTE =
+  "NUMBERS IN THE GENERATED TEXT ARE MODEL OUTPUT, NOT A HYDRAULICS CALCULATION OR MEASUREMENT";
 
 const REAL = ["REAL LOCAL MODEL", "REAL TOKENS", "REAL PROBABILITIES", "REAL SELECTION"];
 
@@ -75,6 +80,9 @@ export const S10Final: React.FC = () => {
         <div style={{ fontSize: 22, color: C.dim, marginTop: 10, opacity: prog(f, 200, 20) }}>
           Synthetic DDR example. {STOP_NOTE[meta.stop_reason] ?? "Generation stopped"} after {meta.steps_generated} tokens.
         </div>
+        <Tag style={{ marginTop: 16, fontSize: 20, whiteSpace: "normal", lineHeight: 1.4, ...rise(f, 200) }}>
+          {GENERATED_VALUES_NOTE}
+        </Tag>
       </Card>
     </AbsoluteFill>
   );

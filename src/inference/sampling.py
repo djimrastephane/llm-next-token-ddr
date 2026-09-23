@@ -25,7 +25,11 @@ def apply_temperature(logits: np.ndarray, temperature: float) -> np.ndarray:
             f"temperature must be > 0 for sampling (got {temperature}). "
             "Temperature 0 is the deterministic limit: use --mode greedy instead."
         )
-    return np.asarray(logits, dtype=np.float64) / temperature
+    with np.errstate(over="ignore", divide="ignore", invalid="ignore"):
+        scaled = np.asarray(logits, dtype=np.float64) / temperature
+    if not np.isfinite(scaled).all():
+        raise ValueError(f"temperature {temperature} is too small: scaled logits overflow. Use --mode greedy instead.")
+    return scaled
 
 
 def rank_order(probs: np.ndarray) -> np.ndarray:

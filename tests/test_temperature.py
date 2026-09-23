@@ -51,3 +51,10 @@ def test_trace_temperature_probability_recomputable(sampling_trace):
                 expected = np.exp((a["raw_logit"] - b["raw_logit"]) / T)
                 assert ratio == pytest.approx(expected, rel=1e-4)
             assert a["scaled_logit"] == pytest.approx(a["raw_logit"] / T, rel=1e-9)
+
+
+def test_temperature_underflow_rejected_not_nan():
+    with pytest.raises(ValueError, match="too small"):
+        apply_temperature(np.array([1.0, 2.0]), 1e-320)
+    with pytest.raises(ValueError):
+        decide(np.array([1.0, 2.0]), "sampling", 1e-320, 0.9, np.random.default_rng(0))

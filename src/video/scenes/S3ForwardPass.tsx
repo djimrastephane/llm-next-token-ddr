@@ -3,7 +3,7 @@ import { Card } from "../components/Card";
 import { ModelBlock } from "../components/ModelBlock";
 import { SceneTitle } from "../components/SceneTitle";
 import { TokenText } from "../components/TokenText";
-import { firstStep, trace } from "../data/loadInferenceTrace";
+import { firstStep, meta, trace } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { int, num } from "../utils/format";
 import { C, CONTENT_W, FONT_MONO, FONT_UI } from "../utils/theme";
@@ -17,10 +17,11 @@ export const S3ForwardPass: React.FC = () => {
   const ids = trace.input_tokens.slice(-8);
   const pulse = interpolate(f, [30, 130], [0, 3], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) % 1;
   const rest = firstStep.vocab_size - SHOW;
+  const padding = firstStep.vocab_size - meta.tokenizer_vocab_size; // logit rows with no token
   return (
     <AbsoluteFill style={{ opacity: sceneFade(f, sceneFrames("forward")), fontFamily: FONT_UI }}>
       <div style={{ position: "absolute", top: STAGE_TOP, left: STAGE_LEFT, width: CONTENT_W }}>
-        <SceneTitle kicker="02 · FORWARD PASS" title="The model scores every token" subtitle="The whole context goes in. One score per vocabulary entry comes out." />
+        <SceneTitle kicker="02 · FORWARD PASS" title="The model scores every token" subtitle="The whole context goes in. One score per vocabulary slot comes out." />
         <div style={{ position: "relative", height: 120, marginTop: 20 }}>
           {ids.map((t, i) => {
             const p = prog(f, 18 + i * 6, 40);
@@ -53,7 +54,8 @@ export const S3ForwardPass: React.FC = () => {
         <Card style={{ ...rise(f, 120), padding: "22px 30px" }} glow={C.purple}>
           <div style={{ fontFamily: FONT_MONO, fontSize: 24, color: C.purple, fontWeight: 700, letterSpacing: 2 }}>VOCABULARY SCORES (LOGITS)</div>
           <div style={{ fontSize: 28, color: C.muted, marginTop: 6 }}>
-            <b style={{ color: C.text }}>{int(firstStep.vocab_size)}</b> raw scores, one per vocabulary entry. Highest shown:
+            <b style={{ color: C.text }}>{int(firstStep.vocab_size)}</b> raw scores: {int(meta.tokenizer_vocab_size)} tokens
+            {padding > 0 ? ` + ${int(padding)} unused padding slots` : ""}. Highest shown:
           </div>
           <div style={{ marginTop: 12 }}>
             {firstStep.top_candidates.slice(0, SHOW).map((c, i) => (

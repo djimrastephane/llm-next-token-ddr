@@ -25,6 +25,8 @@ This project answers that with a real experiment, not an illustration. A languag
 | **Result (greedy, same context)** | `… Pump pressure remained` **` constant at 1,000 psi.`** |
 | **Software** | Python 3.11.9 · torch 2.14.0 · transformers 5.17.0 · numpy 2.4.6 |
 
+> **The generated pressure ("3,800 psi") is text predicted by the model, not a hydraulics calculation or a measurement.** The DDR input contains no flow rate, mud weight, rheology or string geometry, so the value is physically unconstrained. Greedy decoding on the same context produces 1,000 psi.
+
 The full record is in `data/generated/inference_trace.json`. Sampling did not always take the most likely token: at step 4 it selected the **rank-3** token `3` (18.4% sampling probability), and at step 6 the **rank-8** token `8` (7.4%). The video keeps those results as captured. The stopping rule (stop at the first token that ends a sentence) was fixed before looking at any output.
 
 The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for education**. They don't describe any real well or operator. They were written before any model output was seen and were not edited afterwards.
@@ -39,7 +41,7 @@ The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for 
 
 **Token ID.** Each token's number in the model's dictionary. ` pressure` is 7262. The model only ever sees these numbers.
 
-**Logit (score).** For the next position, the model produces one raw score for **every** entry in its vocabulary (151,936 of them for Qwen2.5). A higher score means the model considers that token more fitting. Scores aren't probabilities: they can be any number.
+**Logit (score).** For the next position, the model produces one raw score for **every** entry in its vocabulary. For Qwen2.5 that is 151,936 scores: 151,665 real tokens plus 271 unused padding slots, whose total probability is below 0.00002%. A higher score means the model considers that token more fitting. Scores aren't probabilities: they can be any number.
 
 **Softmax → probability.** Softmax turns the scores into probabilities between 0 and 100% that add up to 100%. **Softmax does not choose anything**; it only converts.
 
@@ -143,7 +145,7 @@ node scripts/render_stills.mjs 1200 2800   # QA stills → out/stills/
 ### Tests and checks
 
 ```bash
-.venv/bin/python -m pytest        # 54 tests: maths, top-p vs Hugging Face, tokenization, schema, recompute from logits, no hard-coded video data
+.venv/bin/python -m pytest        # 59 tests: maths, top-p vs Hugging Face, tokenization, schema, recompute from logits, no hard-coded video data
 npm test                          # loader serves the trace unchanged and rejects tampered traces
 npm run typecheck && npm run lint && .venv/bin/ruff check src tests
 ```
@@ -172,6 +174,6 @@ scripts/                              capture / preview / render helpers
 ## Limitations
 
 - A 1.5B-parameter general model has no drilling-domain training guarantees. Its continuations are plausible text, not engineering judgement.
-- The sentence-end rule treats any token ending in `.`, `!` or `?` as a sentence end, so a decimal point such as `3.` would also stop generation.
+- The sentence-end rule is a heuristic applied to the generated text so far: `!`, `?` or a newline ends the sentence, and so does a `.` unless it follows a digit (possible decimal point) or a DDR abbreviation such as `in.`, `ft.` or `approx.`. In those cases generation continues.
 - The loop scene plays the first three later steps at full pace and the rest in fast-forward, to keep the video near 60 s.
 - The greedy trace is captured for comparison, but the current video renders only the sampling trace.
