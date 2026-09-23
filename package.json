@@ -1,0 +1,33 @@
+{
+  "name": "llm-next-token-ddr",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remotion video of a real local LLM predicting the next token of a Daily Drilling Report",
+  "type": "module",
+  "scripts": {
+    "preview": "remotion studio src/video/index.ts",
+    "render": "remotion render src/video/index.ts NextTokenDDR out/next_token_ddr.mp4",
+    "still": "remotion still src/video/index.ts NextTokenDDR",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/video",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.527",
+    "@remotion/google-fonts": "^4.0.527",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.527"
+  },
+  "devDependencies": {
+    "@remotion/bundler": "^4.0.527",
+    "@remotion/eslint-config-flat": "^4.0.527",
+    "@remotion/renderer": "^4.0.527",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.1"
+  }
+}

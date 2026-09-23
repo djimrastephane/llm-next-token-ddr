@@ -1,0 +1,34 @@
+{
+  "notice": "SYNTHETIC EDUCATIONAL EXAMPLES. These Daily Drilling Report (DDR) fragments were written for this project. They do not describe any real well, operator, or operation. Each context deliberately stops mid-sentence so the model has something to complete; no context was edited after seeing model output.",
+  "default_context_id": "drilling_flow_check",
+  "contexts": [
+    {
+      "id": "drilling_flow_check",
+      "category": "drilling",
+      "title": "8½ in. section - flow check at section TD",
+      "text": "Drilled 8½ in. hole section to 12,450 ft MD. Circulated bottoms up and performed flow check. Pump pressure remained",
+      "facts": { "well_depth": "12,450 ft MD", "hole_size": "8½ in." }
+    },
+    {
+      "id": "completions_packer",
+      "category": "completions",
+      "title": "Production packer setting",
+      "text": "RIH with 4½ in. production tubing and hydraulic-set packer to 9,870 ft MD. Dropped ball and pressured up tubing to set packer. Observed",
+      "facts": { "packer_depth": "9,870 ft MD", "tubing_size": "4½ in." }
+    },
+    {
+      "id": "intervention_wireline",
+      "category": "well intervention",
+      "title": "Slickline gauge run",
+      "text": "Rigged up slickline and pressure tested lubricator to 5,000 psi. RIH with 2.75 in. gauge cutter to 8,200 ft MD. Tagged",
+      "facts": { "tag_depth": "8,200 ft MD", "test_pressure": "5,000 psi" }
+    },
+    {
+      "id": "integrity_annulus",
+      "category": "well integrity",
+      "title": "Sustained annulus pressure check",
+      "text": "Monitored B-annulus pressure during 24 hr shut-in. Pressure built up from 150 psi to 420 psi. Bled down annulus and",
+      "facts": { "annulus": "B-annulus", "pressure_range": "150-420 psi" }
+    }
+  ]
+}
