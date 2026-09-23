@@ -1,12 +1,12 @@
 {
-  "notice": "SYNTHETIC EDUCATIONAL EXAMPLES. These Daily Drilling Report (DDR) fragments were written for this project. They do not describe any real well, operator, or operation. Each context deliberately stops mid-sentence so the model has something to complete; no context was edited after seeing model output.",
+  "notice": "SYNTHETIC EDUCATIONAL EXAMPLES. These Daily Drilling Report (DDR) fragments were written for this project. They do not describe any real well, operator, or operation. Each context deliberately stops mid-sentence so the model has something to complete; no context was edited to steer model output. Revision (QA/QC finding F3): drilling_flow_check originally read '...Circulated bottoms up and performed flow check. Pump pressure remained', which placed a pump-pressure observation after a flow check (pumps off). It was reworded for operational correctness before re-capturing; the earlier text and its output are preserved in release v0.2.1.",
   "default_context_id": "drilling_flow_check",
   "contexts": [
     {
       "id": "drilling_flow_check",
       "category": "drilling",
       "title": "8½ in. section - flow check at section TD",
-      "text": "Drilled 8½ in. hole section to 12,450 ft MD. Circulated bottoms up and performed flow check. Pump pressure remained",
+      "text": "Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained",
       "facts": { "hole_depth": "12,450 ft MD", "hole_size": "8½ in." }
     },
     {

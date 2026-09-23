@@ -25,6 +25,9 @@ const STOP_NOTE: Record<string, string> = {
 export const GENERATED_VALUES_NOTE =
   "NUMBERS IN THE GENERATED TEXT ARE MODEL OUTPUT, NOT A HYDRAULICS CALCULATION OR MEASUREMENT";
 
+/** Shown only when the generated text actually contains a number. */
+export const HAS_NUMBERS = /\d/.test(trace.generated_text);
+
 const REAL = ["REAL LOCAL MODEL", "REAL TOKENS", "REAL PROBABILITIES", "REAL SELECTION"];
 
 export const S10Final: React.FC = () => {
@@ -80,9 +83,11 @@ export const S10Final: React.FC = () => {
         <div style={{ fontSize: 22, color: C.dim, marginTop: 10, opacity: prog(f, 200, 20) }}>
           Synthetic DDR example. {STOP_NOTE[meta.stop_reason] ?? "Generation stopped"} after {meta.steps_generated} tokens.
         </div>
-        <Tag style={{ marginTop: 16, fontSize: 20, whiteSpace: "normal", lineHeight: 1.4, ...rise(f, 200) }}>
-          {GENERATED_VALUES_NOTE}
-        </Tag>
+        {HAS_NUMBERS && (
+          <Tag style={{ marginTop: 16, fontSize: 20, whiteSpace: "normal", lineHeight: 1.4, ...rise(f, 200) }}>
+            {GENERATED_VALUES_NOTE}
+          </Tag>
+        )}
       </Card>
     </AbsoluteFill>
   );

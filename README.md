@@ -14,28 +14,28 @@ This project answers that with a real experiment, not an illustration. A languag
 |---|---|
 | **Model** | `Qwen/Qwen2.5-1.5B-Instruct` (revision `989aa798…`), float32 |
 | **Device** | `mps` (Apple M4 Pro), local, no cloud API |
-| **DDR context** (synthetic) | *Drilled 8½ in. hole section to 12,450 ft MD. Circulated bottoms up and performed flow check. Pump pressure remained* |
+| **DDR context** (synthetic) | *Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained* |
 | **Prompt mode** | `raw-text` (the model sees exactly the DDR text, nothing else) |
 | **Generation mode** | top-p sampling |
 | **Temperature** | 0.70 |
 | **Top-p** | 0.90 |
 | **Seed** | 42 |
-| **Steps** | until the model ends the sentence (`--until-sentence-end`, cap 40): 10 tokens |
-| **Result (sampling)** | `… Pump pressure remained` **` constant at 3,800 psi.`** |
+| **Steps** | until the model ends the sentence (`--until-sentence-end`, cap 40): 2 tokens |
+| **Result (sampling)** | `… Pump pressure remained` **` constant.`** |
 | **Result (greedy, same context)** | `… Pump pressure remained` **` constant at 1,000 psi.`** |
 | **Software** | Python 3.11.9 · torch 2.14.0 · transformers 5.17.0 · numpy 2.4.6 |
 
-> **The generated pressure ("3,800 psi") is text predicted by the model, not a hydraulics calculation or a measurement.** The DDR input contains no flow rate, mud weight, rheology or string geometry, so the value is physically unconstrained. Greedy decoding on the same context produces 1,000 psi.
+> **Any number in the generated text is predicted by the model, not a hydraulics calculation or a measurement.** Greedy decoding on this context writes "1,000 psi", but the DDR input contains no flow rate, mud weight, rheology or string geometry, so that value is physically unconstrained. An earlier context wording (release v0.2.1) led the sampled run to "3,800 psi" instead. When the generated text contains a number, the video shows this warning on screen.
 
-The full record is in `data/generated/inference_trace.json`. Sampling did not always take the most likely token: at step 4 it selected the **rank-3** token `3` (18.4% sampling probability), and at step 6 the **rank-8** token `8` (7.4%). The video keeps those results as captured. The stopping rule (stop at the first token that ends a sentence) was fixed before looking at any output.
+The full record is in `data/generated/inference_trace.json`. Sampling did not always take the most likely token: at step 2 it selected the **rank-2** token `.` (41.0% sampling probability) over ` at` (43.7%), ending the sentence where greedy decoding continues with "at 1,000 psi.". The video keeps that result as captured. The stopping rule (stop at the first token that ends a sentence) was fixed before looking at any output.
 
-The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for education**. They don't describe any real well or operator. They were written before any model output was seen and were not edited afterwards.
+The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for education**. They don't describe any real well or operator. They were written before any model output was seen, and none has been edited to steer the model. The drilling context was reworded once, for operational correctness (QA/QC finding F3). A flow check is done with the pumps off, so the original wording ("…Circulated bottoms up and performed flow check. Pump pressure remained") put a pump-pressure observation after it. The flow check now comes first. The new wording was fixed before re-running the model, and the earlier run is preserved in release v0.2.1.
 
 ---
 
 ## The ideas, in plain language
 
-**Token.** LLMs don't read words. They read *tokens*: chunks of text from a fixed dictionary. A token can be a whole word (` pressure`), part of a word (`Dr` + `illed`), a single digit (`1`, `2`, `4`, `5`, `0`), punctuation (`,`), a space, or a special control marker. In our DDR sentence, 19 words became **32 tokens**. Many tokens begin with a space; the video shows that space as `␠` (e.g. `␠pressure`) so it isn't hidden.
+**Token.** LLMs don't read words. They read *tokens*: chunks of text from a fixed dictionary. A token can be a whole word (` pressure`), part of a word (`Dr` + `illed`), a single digit (`1`, `2`, `4`, `5`, `0`), punctuation (`,`), a space, or a special control marker. In our DDR text, 20 words became **36 tokens**. Many tokens begin with a space; the video shows that space as `␠` (e.g. `␠pressure`) so it isn't hidden.
 
 **Tokenizer.** The tool that splits text into tokens. It is fixed and deterministic, and it belongs to the model.
 
@@ -45,7 +45,7 @@ The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for 
 
 **Softmax → probability.** Softmax turns the scores into probabilities between 0 and 100% that add up to 100%. **Softmax does not choose anything**; it only converts.
 
-**Temperature.** A dial applied before softmax. Below 1 (we use 0.70), likely tokens become even more likely (the distribution *sharpens*). Above 1, it flattens. Temperature adds **no randomness by itself**; it only reshapes the probabilities used by the next steps. In our run, ` constant` went from 32.6% (the model's own distribution) to 53.4% at T = 0.70.
+**Temperature.** A dial applied before softmax. Below 1 (we use 0.70), likely tokens become even more likely (the distribution *sharpens*). Above 1, it flattens. Temperature adds **no randomness by itself**; it only reshapes the probabilities used by the next steps. In our run, ` constant` went from 31.0% (the model's own distribution) to 52.0% at T = 0.70.
 
 **Top-p (nucleus).** Rank the tokens from most to least likely and keep adding them until their probabilities add up to at least *p* (we use 90%). Only these tokens are *eligible*; everything else is *excluded*. The eligible probabilities are then rescaled to add up to 100% again. That's why the video shows two different numbers:
 
@@ -77,13 +77,13 @@ Implementation notes (verified, not assumed):
 - All maths runs in float64 NumPy on the model's float32 logits (`src/inference/sampling.py`). Ranking ties use a stable sort (lower token ID first).
 - The nucleus matches Hugging Face's own `TemperatureLogitsWarper` + `TopPLogitsWarper` exactly at every step; a test checks this.
 - **Temperature 0**: dividing by zero is never attempted. `--mode sampling --temperature 0` is rejected with a message pointing to `--mode greedy` (the T → 0 limit). Greedy mode ignores temperature and top-p and records them as `null`.
-- **No other logits processors are applied.** Qwen's `generation_config` sets `repetition_penalty=1.1, top_k=20, top_p=0.8`, and `model.generate()` applies these even with `do_sample=False`. We verified that `generate()` with default settings picks a different token at step 4 (the repetition penalty lowers the digits already present in "12,450"). With `repetition_penalty=1.0`, `generate()` reproduces our greedy trace token for token. This project deliberately shows the plain pipeline.
+- **No other logits processors are applied.** Qwen's `generation_config` sets `repetition_penalty=1.1, top_k=20, top_p=0.8`, and `model.generate()` applies these even with `do_sample=False`. We verified that `generate()` with default settings writes " constant at 37 psi. No gas was…", which differs from our greedy trace from step 4 on (the repetition penalty lowers tokens already in the context, such as the digits in "12,450"). With `repetition_penalty=1.0`, `generate()` reproduces our greedy trace token for token. This project deliberately shows the plain pipeline.
 - Each step runs a full forward pass over the whole sequence (no KV cache) under `torch.inference_mode()`, which matches `logits = model(context)` literally.
 - **Reproducibility.** Python `random`, NumPy, and PyTorch are all seeded, and re-running on the same machine reproduced the trace exactly. Logits can differ in the last digits across devices, dtypes, and library versions, so bit-identical traces are only expected on the same setup.
 
 ### Prompt formatting matters
 
-`--prompt-mode raw-text` (default) feeds the DDR text as-is. `--prompt-mode chat-template` wraps it with the tokenizer's official chat template (system + user instruction), placing the DDR text at the start of the assistant turn so the model continues it. **Different prompt formatting gives a different probability distribution.** With the chat template, step 1 picks ` stable` (48.7%) instead of ` constant` (32.6%). The trace always stores both `display_context` (what viewers see) and `actual_model_input` (the exact decoded model input, including any special tokens), and flags which input tokens belong to the DDR text.
+`--prompt-mode raw-text` (default) feeds the DDR text as-is. `--prompt-mode chat-template` wraps it with the tokenizer's official chat template (system + user instruction), placing the DDR text at the start of the assistant turn so the model continues it. **Different prompt formatting gives a different probability distribution.** With the chat template, step 1 picks ` stable` (54.7%) instead of ` constant` (31.0% in raw-text mode). The trace always stores both `display_context` (what viewers see) and `actual_model_input` (the exact decoded model input, including any special tokens), and flags which input tokens belong to the DDR text.
 
 ### Trace format (`data/generated/inference_trace.json`, schema 1.0)
 

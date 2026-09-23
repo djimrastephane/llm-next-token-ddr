@@ -83,9 +83,11 @@ export const S8Loop: React.FC = () => {
         </div>
         <div style={{ opacity: prog(f, 100, 20) }}>
           <StepLog count={appendedCount(loop0 + f)} />
-          <div style={{ fontFamily: FONT_MONO, fontSize: 19, color: C.amber, marginTop: 12 }}>
-            Generated text, not a calculation: any number here is a model prediction.
-          </div>
+          {/\d/.test(trace.generated_text) && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 19, color: C.amber, marginTop: 12 }}>
+              Generated text, not a calculation: any number here is a model prediction.
+            </div>
+          )}
         </div>
       </div>
       {later.map((s, i) => {

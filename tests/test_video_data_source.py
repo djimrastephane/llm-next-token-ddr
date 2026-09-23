@@ -37,7 +37,10 @@ def test_only_loader_imports_trace_json():
 
 
 def test_video_disclaims_generated_numbers():
-    """Generated text can contain engineering numbers; the video must say they are not calculations."""
+    """Generated text can contain engineering numbers; the video must say they are not calculations
+    whenever the generated text contains a digit."""
     final = (VIDEO / "scenes" / "S10Final.tsx").read_text(encoding="utf-8")
     assert "NOT A HYDRAULICS CALCULATION OR MEASUREMENT" in final
-    assert "not a calculation" in (VIDEO / "scenes" / "S8Loop.tsx").read_text(encoding="utf-8")
+    assert "HAS_NUMBERS = /\\d/.test(trace.generated_text)" in final
+    loop = (VIDEO / "scenes" / "S8Loop.tsx").read_text(encoding="utf-8")
+    assert "not a calculation" in loop and "/\\d/.test(trace.generated_text)" in loop
