@@ -46,7 +46,12 @@ def parse_args(argv=None):
     p.add_argument("--temperature", type=float, default=0.7, help="sampling only; must be > 0")
     p.add_argument("--top-p", type=float, default=0.90, help="sampling only; in (0, 1]")
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--steps", type=int, default=5, help="number of tokens to generate")
+    p.add_argument("--steps", type=int, default=5, help="number of tokens to generate (the cap with --until-sentence-end)")
+    p.add_argument(
+        "--until-sentence-end",
+        action="store_true",
+        help="stop early once the model emits a token ending the sentence ('.', '!', '?', newline) or end-of-text",
+    )
     p.add_argument("--context", help="custom DDR text (overrides --context-id)")
     p.add_argument("--context-id", help="id from data/input/ddr_contexts.json")
     p.add_argument("--contexts-file", default=str(DEFAULT_CONTEXTS))
@@ -101,6 +106,14 @@ def build_input_ids(tokenizer, text: str, prompt_mode: str) -> tuple[list[int], 
         prefix_ids = tokenizer(prefix, add_special_tokens=False).input_ids
     text_ids = tokenizer(text, add_special_tokens=False).input_ids
     return prefix_ids + text_ids, len(prefix_ids)
+
+
+def ends_sentence(decoded: str) -> bool:
+    """True if a generated token closes a sentence: it ends with . ! ? (ignoring trailing spaces) or holds a newline.
+
+    Decided before looking at any output; note a decimal point ("3.") would also count.
+    """
+    return "\n" in decoded or decoded.rstrip(" ").endswith((".", "!", "?"))
 
 
 def seed_everything(seed: int) -> np.random.Generator:
@@ -217,6 +230,9 @@ def main(argv=None):
         if d.selected_id in eos_ids:
             stop_reason = "eos"
             break
+        if args.until_sentence_end and ends_sentence(sel["decoded_token"]):
+            stop_reason = "sentence_end"
+            break
 
     sampling = args.mode == "sampling"
     trace = {
@@ -235,6 +251,7 @@ def main(argv=None):
             "steps_requested": args.steps,
             "steps_generated": len(steps),
             "stop_reason": stop_reason,
+            "until_sentence_end": args.until_sentence_end,
             "display_top_k": args.display_top_k,
             "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "versions": {

@@ -65,3 +65,19 @@ def test_greedy_and_sampling_share_starting_context(sampling_trace, greedy_trace
     b = {c["token_id"]: c["model_probability"] for c in greedy_trace["steps"][0]["top_candidates"]}
     for k in set(a) & set(b):
         assert a[k] == pytest.approx(b[k], abs=1e-4)
+
+
+def test_ends_sentence_rule():
+    from src.inference.capture_trace import ends_sentence
+
+    assert ends_sentence(".") and ends_sentence(" psi.") and ends_sentence("!\n") and ends_sentence("\n")
+    assert not ends_sentence(" psi") and not ends_sentence(",") and not ends_sentence("3")
+
+
+def test_trace_stops_exactly_at_sentence_end(sampling_trace):
+    from src.inference.capture_trace import ends_sentence
+
+    if sampling_trace["metadata"].get("until_sentence_end"):
+        ends = [ends_sentence(s["selected_token"]["decoded_token"]) for s in sampling_trace["steps"]]
+        assert ends[-1] == (sampling_trace["metadata"]["stop_reason"] == "sentence_end")
+        assert not any(ends[:-1])  # nothing ended the sentence earlier

@@ -14,6 +14,12 @@ const STEPS = [
   "Append it to the context",
   "Repeat",
 ];
+const STOP_NOTE: Record<string, string> = {
+  sentence_end: "The model ended the sentence itself",
+  eos: "The model emitted end-of-text",
+  max_steps: "Generation was capped",
+};
+
 const REAL = ["REAL LOCAL MODEL", "REAL TOKENS", "REAL PROBABILITIES", "REAL SELECTION"];
 
 export const S10Final: React.FC = () => {
@@ -67,7 +73,7 @@ export const S10Final: React.FC = () => {
           <span style={{ color: C.magenta, fontWeight: 700 }}>{trace.generated_text}</span>
         </div>
         <div style={{ fontSize: 22, color: C.dim, marginTop: 10, opacity: prog(f, 200, 20) }}>
-          Synthetic DDR example. Generation stopped after {meta.steps_generated} tokens by design.
+          Synthetic DDR example. {STOP_NOTE[meta.stop_reason] ?? "Generation stopped"} after {meta.steps_generated} tokens.
         </div>
       </Card>
     </AbsoluteFill>

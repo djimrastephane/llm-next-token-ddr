@@ -9,7 +9,7 @@ import { trace } from "../data/loadInferenceTrace";
 import { prog, rise, sceneFade } from "../utils/anim";
 import { pct } from "../utils/format";
 import { C, CONTENT_W, FONT_MONO, FONT_UI, W } from "../utils/theme";
-import { LOOP_EACH, LOOP_FIRST, appendedCount, sceneFrames, sceneStart } from "../utils/timeline";
+import { LOOP_FIRST, appendedCount, designFrame, loopStepFrames, loopStepStart, sceneFrames, sceneStart } from "../utils/timeline";
 import { STAGE_LEFT, STAGE_TOP } from "./layout";
 
 const CONTEXT_CARD: [number, number] = [W / 2, 1735]; // where appended tokens land (DDR card)
@@ -44,9 +44,12 @@ const Equation: React.FC<{ f: number }> = ({ f }) => {
   );
 };
 
+const LOG_ROWS = 5;
+
+/** The most recent selections (older rows scroll off; the full sentence is in the DDR card). */
 const StepLog: React.FC<{ count: number }> = ({ count }) => (
   <div style={{ fontFamily: FONT_MONO }}>
-    {trace.steps.slice(0, count).map((s) => (
+    {trace.steps.slice(Math.max(0, count - LOG_ROWS), count).map((s) => (
       <div key={s.step} style={{ display: "flex", alignItems: "center", height: 48, borderBottom: `1px solid ${C.border}`, fontSize: 24, color: C.muted, gap: 18 }}>
         <span style={{ width: 90, color: C.magenta, fontWeight: 700 }}>t = {s.step}</span>
         <span style={{ width: 260 }}>
@@ -73,8 +76,8 @@ export const S8Loop: React.FC = () => {
             <Equation f={f} />
           </Sequence>
           {later.map((s, i) => (
-            <Sequence key={s.step} from={LOOP_FIRST + i * LOOP_EACH} durationInFrames={LOOP_EACH} layout="none">
-              <StepFrame step={i + 1} />
+            <Sequence key={s.step} from={loopStepStart(i)} durationInFrames={loopStepFrames(i)} layout="none">
+              <StepFrame index={i} />
             </Sequence>
           ))}
         </div>
@@ -83,7 +86,7 @@ export const S8Loop: React.FC = () => {
         </div>
       </div>
       {later.map((s, i) => {
-        const local = f - LOOP_FIRST - i * LOOP_EACH;
+        const local = designFrame(f - loopStepStart(i), i);
         const selIdx = s.top_candidates.slice(0, 8).findIndex((c) => c.selected);
         const shown = Math.min(8, Math.max((s.nucleus_size ?? 1) + 2, s.selected_token.rank));
         const x = STAGE_LEFT + ((selIdx + 0.5) * CONTENT_W) / shown;
@@ -93,11 +96,12 @@ export const S8Loop: React.FC = () => {
   );
 };
 
-const StepFrame: React.FC<{ step: number }> = ({ step }) => {
-  const f = useCurrentFrame();
+/** Later step `index` (t = index + 2), animated on the design clock so fast steps replay the same motion. */
+const StepFrame: React.FC<{ index: number }> = ({ index }) => {
+  const f = designFrame(useCurrentFrame(), index);
   return (
-    <div style={{ opacity: Math.min(prog(f, 0, 8), 1 - prog(f, LOOP_EACH - 8, 8)) }}>
-      <GenerationStep step={trace.steps[step]} frame={f} width={CONTENT_W} barH={300} />
+    <div style={{ opacity: Math.min(prog(f, 0, 8), 1 - prog(f, 107, 8)) }}>
+      <GenerationStep step={trace.steps[index + 1]} frame={f} width={CONTENT_W} barH={300} />
     </div>
   );
 };

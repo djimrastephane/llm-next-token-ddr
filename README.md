@@ -20,12 +20,12 @@ This project answers that with a real experiment, not an illustration. A languag
 | **Temperature** | 0.70 |
 | **Top-p** | 0.90 |
 | **Seed** | 42 |
-| **Steps** | 5 tokens |
-| **Result (sampling)** | `… Pump pressure remained` **` constant at 3,`** |
-| **Result (greedy, same context)** | `… Pump pressure remained` **` constant at 1,`** |
+| **Steps** | until the model ends the sentence (`--until-sentence-end`, cap 40): 10 tokens |
+| **Result (sampling)** | `… Pump pressure remained` **` constant at 3,800 psi.`** |
+| **Result (greedy, same context)** | `… Pump pressure remained` **` constant at 1,000 psi.`** |
 | **Software** | Python 3.11.9 · torch 2.14.0 · transformers 5.17.0 · numpy 2.4.6 |
 
-The full record is in `data/generated/inference_trace.json`. At step 4, sampling selected the **rank-3** token `3` (18.4% sampling probability), not the most likely token `1`. The video keeps that result as captured.
+The full record is in `data/generated/inference_trace.json`. Sampling did not always take the most likely token: at step 4 it selected the **rank-3** token `3` (18.4% sampling probability), and at step 6 the **rank-8** token `8` (7.4%). The video keeps those results as captured. The stopping rule (stop at the first token that ends a sentence) was fixed before looking at any output.
 
 The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for education**. They don't describe any real well or operator. They were written before any model output was seen and were not edited afterwards.
 
@@ -116,8 +116,8 @@ scripts/capture_trace.sh          # sampling trace (drives the video) + greedy t
 or directly:
 
 ```bash
-python -m src.inference.capture_trace --mode sampling --temperature 0.7 --top-p 0.90 --seed 42 --steps 5
-python -m src.inference.capture_trace --mode greedy --steps 5 --output data/generated/inference_trace_greedy.json
+python -m src.inference.capture_trace --mode sampling --temperature 0.7 --top-p 0.90 --seed 42 --steps 40 --until-sentence-end
+python -m src.inference.capture_trace --mode greedy --steps 40 --until-sentence-end --output data/generated/inference_trace_greedy.json
 ```
 
 | Change… | Flag |
@@ -127,7 +127,7 @@ python -m src.inference.capture_trace --mode greedy --steps 5 --output data/gene
 | Model | `--model Qwen/Qwen2.5-0.5B-Instruct` (any HF causal LM) |
 | Temperature / top-p / seed | `--temperature 0.9 --top-p 0.95 --seed 7` |
 | Greedy vs sampling | `--mode greedy` / `--mode sampling` |
-| Number of tokens | `--steps 8` (the video's loop scene grows automatically) |
+| Number of tokens | `--steps 8`, or `--until-sentence-end` to stop when the model ends the sentence (`--steps` is then the cap). The video's loop scene grows automatically. |
 | Prompt format | `--prompt-mode chat-template` |
 
 The video always renders `data/generated/inference_trace.json`, which must be a sampling trace because the video explains temperature and top-p. After capturing a new trace, re-render; there is nothing to edit by hand.
@@ -143,7 +143,7 @@ node scripts/render_stills.mjs 1200 2800   # QA stills → out/stills/
 ### Tests and checks
 
 ```bash
-.venv/bin/python -m pytest        # 52 tests: maths, top-p vs Hugging Face, tokenization, schema, recompute from logits, no hard-coded video data
+.venv/bin/python -m pytest        # 54 tests: maths, top-p vs Hugging Face, tokenization, schema, recompute from logits, no hard-coded video data
 npm test                          # loader serves the trace unchanged and rejects tampered traces
 npm run typecheck && npm run lint && .venv/bin/ruff check src tests
 ```
@@ -172,5 +172,6 @@ scripts/                              capture / preview / render helpers
 ## Limitations
 
 - A 1.5B-parameter general model has no drilling-domain training guarantees. Its continuations are plausible text, not engineering judgement.
-- Five tokens is short: the sentence ends mid-number (`constant at 3,`). This is what the model produced; capture more steps with `--steps`.
+- The sentence-end rule treats any token ending in `.`, `!` or `?` as a sentence end, so a decimal point such as `3.` would also stop generation.
+- The loop scene plays the first three later steps at full pace and the rest in fast-forward, to keep the video near 60 s.
 - The greedy trace is captured for comparison, but the current video renders only the sampling trace.
