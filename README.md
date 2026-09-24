@@ -6,7 +6,7 @@ This project answers that with a real experiment on a laptop, not an illustratio
 
 ![Four frames from the video: the report text split into tokens; the top-p filter; one token being drawn; greedy and sampling runs compared](docs/media/video_overview.jpg)
 
-**▶ [Watch the video](https://github.com/djimrastephane/llm-next-token-ddr/releases/latest)** (56 seconds, vertical format; open the `.mp4` under *Assets*). No installation is needed to watch it. While this repository is private, you need access to it to open the link.
+**▶ [Watch the video](https://github.com/djimrastephane/llm-next-token-ddr/releases/latest)** (56 seconds, vertical format; open the `.mp4` under *Assets*). No installation or account is needed to watch it.
 
 > **Every word choice, probability, ranking and selection in the video was recorded from a real AI model running on a laptop. None of it was written by hand for the animation.**
 
