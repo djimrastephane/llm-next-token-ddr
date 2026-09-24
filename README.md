@@ -1,35 +1,60 @@
-# How an LLM Picks the Next Word in a Drilling Report
+# How an AI Language Model Writes the Next Word of a Daily Drilling Report (DDR)
 
-**When an LLM writes the next part of a drilling report, how does it decide what comes next?**
+**When an AI model like ChatGPT writes the next part of a drilling report, how does it decide what comes next?**
 
-This project answers that with a real experiment, not an illustration. A language model runs locally on a laptop. We give it the start of a Daily Drilling Report (DDR) entry, record exactly what it computes at each step, and turn that recording into a short vertical video (1080 × 1920, 60 fps). Its length follows the number of generated tokens: about 56 s for the current 2-token run. A comparison scene shows the greedy and sampling runs side by side, from the same context and model, and marks the first step where they diverge.
+This project answers that with a real experiment on a laptop, not an illustration. We give a language model the start of a Daily Drilling Report entry, record exactly what it calculates at each step, and turn that recording into a short vertical video for phones and LinkedIn.
 
-> **All token candidates, probabilities, rankings, and selections shown in this project are captured from an actual local LLM inference run. They are not manually authored for the animation.**
+![Four frames from the video: the report text split into tokens; the top-p filter; one token being drawn; greedy and sampling runs compared](docs/media/video_overview.jpg)
+
+**▶ [Watch the video](https://github.com/djimrastephane/llm-next-token-ddr/releases/latest)** (56 seconds, vertical format; open the `.mp4` under *Assets*). No installation is needed to watch it. While this repository is private, you need access to it to open the link.
+
+> **Every word choice, probability, ranking and selection in the video was recorded from a real AI model running on a laptop. None of it was written by hand for the animation.**
 
 ---
 
-## Provenance of the rendered video
+## Summary for drilling engineers
 
-| | |
+No programming knowledge is needed for this section.
+
+**The problem.** General-purpose AI language models write text that *sounds* like an experienced driller wrote it. But they produce each word by predicting what usually comes next in text they have seen. They do not calculate pressures, mud weights or volumes, and they know nothing about your well beyond the words you give them.
+
+**What the video shows.** A small open model (Qwen2.5-1.5B) running locally on a laptop continues this synthetic report entry:
+
+> *Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained…*
+
+You watch it break the text into pieces, score every possible next piece, narrow the choice down, and pick one, one word-piece at a time.
+
+**What we found.** The same model, given the same sentence, wrote different reports depending on a single setting:
+
+| Setting | The model wrote |
 |---|---|
-| **Model** | `Qwen/Qwen2.5-1.5B-Instruct` (revision `989aa798…`), float32 |
-| **Device** | `mps` (Apple M4 Pro), local, no cloud API |
-| **DDR context** (synthetic) | *Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained* |
-| **Prompt mode** | `raw-text` (the model sees exactly the DDR text, nothing else) |
-| **Generation mode** | top-p sampling |
-| **Temperature** | 0.70 |
-| **Top-p** | 0.90 |
-| **Seed** | 42 |
-| **Steps** | until the model ends the sentence (`--until-sentence-end`, cap 40): 2 tokens |
-| **Result (sampling)** | `… Pump pressure remained` **` constant.`** |
-| **Result (greedy, same context)** | `… Pump pressure remained` **` constant at 1,000 psi.`** |
-| **Software** | Python 3.11.9 · torch 2.14.0 · transformers 5.17.0 · numpy 2.4.6 |
+| Always take the most likely word ("greedy") | …Pump pressure remained **constant at 1,000 psi.** |
+| Pick at random among the likely words ("sampling", as chat assistants typically do) | …Pump pressure remained **constant.** |
+| Same sampling, earlier wording of the report ([v0.2.1](https://github.com/djimrastephane/llm-next-token-ddr/releases/tag/v0.2.1)) | …Pump pressure remained **constant at 3,800 psi.** |
 
-> **Any number in the generated text is predicted by the model, not a hydraulics calculation or a measurement.** Greedy decoding on this context writes "1,000 psi", but the DDR input contains no flow rate, mud weight, rheology or string geometry, so that value is physically unconstrained. An earlier context wording (release v0.2.1) led the sampled run to "3,800 psi" instead. When the generated text contains a number, the video shows this warning on screen.
+None of these pressures came from a calculation. The report says nothing about flow rate, mud weight, mud properties or drill-string geometry, so the model had no basis for any number. It wrote a figure because figures commonly follow "pump pressure remained constant at" in text.
 
-The full record is in `data/generated/inference_trace.json`. Sampling did not always take the most likely token: at step 2 it selected the **rank-2** token `.` (41.0% sampling probability) over ` at` (43.7%), ending the sentence where greedy decoding continues with "at 1,000 psi.". The video keeps that result as captured. The stopping rule (stop at the first token that ends a sentence) was fixed before looking at any output.
+**The takeaway.** A believable number in a generated report is not evidence of anything. DDRs feed well histories, offset-well planning, incident investigations and regulatory reporting, so an invented pressure that reads correctly can mislead long after the shift. If AI models help draft DDR narratives, the wording can be drafted, but **every value must come from the rig's measured data and engineering calculations and be checked by the person who signs the report**.
 
-The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for education**. They don't describe any real well or operator. They were written before any model output was seen, and none has been edited to steer the model. The drilling context was reworded once, for operational correctness (QA/QC finding F3). A flow check is done with the pumps off, so the original wording ("…Circulated bottoms up and performed flow check. Pump pressure remained") put a pump-pressure observation after it. The flow check now comes first. The new wording was fixed before re-running the model, and the earlier run is preserved in release v0.2.1.
+![The selection claw sweeps across the eligible words and locks onto the one actually drawn](docs/media/selection_claw.gif)
+
+---
+
+## What you'll see in the video
+
+1. **The question:** the report text, and "What comes next?"
+2. **Tokenization:** the text is split into 36 pieces called *tokens*, each with its ID number
+3. **Forward pass:** the model gives a score to every entry in its vocabulary (151,936 slots)
+4. **Probabilities:** the scores become percentages
+5. **Temperature:** a setting (0.70) that makes likely tokens more likely
+6. **Top-p:** only the most likely tokens, covering 90% of the probability, stay in the running
+7. **Selection:** one token is drawn at random, weighted by its chance (the claw is illustrative)
+8. **The loop:** the chosen token is added to the report, and the process repeats
+9. **Greedy vs sampling:** the same model and report, two selection rules, two different continuations
+10. **The code:** the whole loop as seven lines of simplified pseudocode
+11. **Summary:** LLMs generate text one token at a time
+
+The video labels its simplified parts. The "LOCAL LLM" box and the claw are marked *CONCEPTUAL VIEW*: they are not pictures of what happens inside the model. The code card is marked *SIMPLIFIED*.
 
 ---
 
@@ -60,127 +85,41 @@ The DDR examples in `data/input/ddr_contexts.json` are **synthetic, written for 
 
 ---
 
-## Technical detail
+## Where the numbers come from
 
-For raw logits $z$ over vocabulary $V$ and temperature $T > 0$:
-
-$$p_\text{model}(i) = \frac{e^{z_i}}{\sum_j e^{z_j}}, \qquad p_T(i) = \frac{e^{z_i/T}}{\sum_j e^{z_j/T}}$$
-
-Sort by $p_T$ descending. The nucleus $N$ is the smallest prefix whose cumulative $p_T$ reaches $p$: a token is kept if the cumulative probability of the tokens ranked above it is still $< p$, so the top token is always kept. Then:
-
-$$p_\text{sample}(i) = \frac{p_T(i)}{\sum_{k\in N} p_T(k)} \text{ for } i \in N,\quad 0 \text{ otherwise}$$
-
-and the token is drawn with `numpy.random.default_rng(seed).choice(V, p=p_sample)`.
-
-Implementation notes (verified, not assumed):
-
-- All maths runs in float64 NumPy on the model's float32 logits (`src/inference/sampling.py`). Ranking ties use a stable sort (lower token ID first).
-- The nucleus matches Hugging Face's own `TemperatureLogitsWarper` + `TopPLogitsWarper` exactly at every step; a test checks this.
-- **Temperature 0**: dividing by zero is never attempted. `--mode sampling --temperature 0` is rejected with a message pointing to `--mode greedy` (the T → 0 limit). Greedy mode ignores temperature and top-p and records them as `null`.
-- **No other logits processors are applied.** Qwen's `generation_config` sets `repetition_penalty=1.1, top_k=20, top_p=0.8`, and `model.generate()` applies these even with `do_sample=False`. We verified that `generate()` with default settings writes " constant at 37 psi. No gas was…", which differs from our greedy trace from step 4 on (the repetition penalty lowers tokens already in the context, such as the digits in "12,450"). With `repetition_penalty=1.0`, `generate()` reproduces our greedy trace token for token. This project deliberately shows the plain pipeline.
-- Each step runs a full forward pass over the whole sequence (no KV cache) under `torch.inference_mode()`, which matches `logits = model(context)` literally.
-- **Reproducibility.** Python `random`, NumPy, and PyTorch are all seeded, and re-running on the same machine reproduced the trace exactly. Logits can differ in the last digits across devices, dtypes, and library versions, so bit-identical traces are only expected on the same setup.
-
-### Prompt formatting matters
-
-`--prompt-mode raw-text` (default) feeds the DDR text as-is. `--prompt-mode chat-template` wraps it with the tokenizer's official chat template (system + user instruction), placing the DDR text at the start of the assistant turn so the model continues it. **Different prompt formatting gives a different probability distribution.** With the chat template, step 1 picks ` stable` (54.7%) instead of ` constant` (31.0% in raw-text mode). The trace always stores both `display_context` (what viewers see) and `actual_model_input` (the exact decoded model input, including any special tokens), and flags which input tokens belong to the DDR text.
-
-### Trace format (`data/generated/inference_trace.json`, schema 1.1)
-
-- `metadata`: model, revision, `tokenizer_vocab_size`, device, dtype, modes, temperature, top_p, seed, versions, and the exact method used for each quantity
-- `source_context.synthetic`: `true` only when the contexts file declares it; `null` for `--context` text or files that don't say. The video labels the text accordingly and never assumes "synthetic".
-- `display_context`, `actual_model_input`, `input_tokens[]` (id, raw tokenizer string, exact decoded text, UI-safe display text, `in_tokenizer`)
-- `steps[]`, each with `context_before`/`context_after`, `appended_text` (the text this step added; a character split across tokens, such as an emoji, is credited to the token that completes it), `nucleus_size`, `nucleus_complete`, omitted probability mass, and `top_candidates[]`: the top 10 **plus the nucleus** (up to `--max-export`, default 1,000) **plus the selected token**, each with `raw_logit`, `scaled_logit`, `model_probability`, `temperature_probability`, `cumulative_probability`, `inside_top_p`, `sampling_probability`, `selected`
-- `selected_token` and `generated_text`
-
-A very large nucleus (for example top-p = 1.0, where every one of the 151,936 output rows is eligible) is exported only up to `--max-export` and marked `nucleus_complete: false`; the maths still runs over the full vocabulary. Output rows beyond the tokenizer (padding) are exported with `in_tokenizer: false` and empty text rather than an invented token string. Schema 1.0 traces are rejected with a message to re-capture.
-
-The full-vocabulary logits for every step are saved next to the trace as `*.logits.npz` (git-ignored), and the tests recompute every JSON probability from them. The trace is validated on write (`src/inference/schemas.py`) and again on load in the video (`src/video/data/loadInferenceTrace.ts`). Validation checks structure and consistency: probabilities must follow from the recorded logits, the selected token must match its candidate record, all numbers must be finite, and the per-step text must reproduce the generated text.
-
----
-
-## Usage
-
-### Install
-
-```bash
-# Python 3.11+ (exact tested versions are pinned in requirements.txt)
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-# Node 22.12+ (required by the locked Vitest; 22.18 used here)
-npm install
-```
-
-**Model download.** On first run, Hugging Face downloads `Qwen/Qwen2.5-1.5B-Instruct` (~3 GB) into `~/.cache/huggingface`, at the pinned commit `989aa798…` so a later upstream update can't silently change the weights (override with `--revision`; other models default to their latest revision). Weights are loaded from safetensors files only, never from pickled `.bin` files. After that everything runs offline (`HF_HUB_OFFLINE=1`). Float32 needs ~7 GB of RAM; use `--dtype bfloat16` on smaller machines (this changes the logits slightly). The device is chosen automatically in the order CUDA → MPS → CPU (override with `--device`).
-
-### Capture the traces
-
-```bash
-scripts/capture_trace.sh          # sampling trace (drives the video) + greedy trace, same context
-OUT_DIR=/tmp/run scripts/capture_trace.sh   # write both traces elsewhere (--output is refused: it would make one overwrite the other)
-```
-
-or directly:
-
-```bash
-python -m src.inference.capture_trace --mode sampling --temperature 0.7 --top-p 0.90 --seed 42 --steps 40 --until-sentence-end
-python -m src.inference.capture_trace --mode greedy --steps 40 --until-sentence-end --output data/generated/inference_trace_greedy.json
-```
-
-| Change… | Flag |
+| | |
 |---|---|
-| DDR example | `--context-id completions_packer` (see `data/input/ddr_contexts.json`) |
-| Custom DDR text | `--context "Drilled 8½ in. hole section…"` (labelled "custom input, provenance not recorded" in the video) |
-| Model | `--model Qwen/Qwen2.5-0.5B-Instruct` (any HF causal LM) |
-| Temperature / top-p / seed | `--temperature 0.9 --top-p 0.95 --seed 7` |
-| Greedy vs sampling | `--mode greedy` / `--mode sampling` |
-| Number of tokens | `--steps 8`, or `--until-sentence-end` to stop when the model ends the sentence (`--steps` is then the cap). The video's loop scene grows automatically. |
-| Prompt format | `--prompt-mode chat-template` |
+| **Model** | `Qwen/Qwen2.5-1.5B-Instruct` (revision `989aa798…`), full precision (float32) |
+| **Computer** | Apple M4 Pro laptop (`mps`), local, no cloud service |
+| **Report text** (synthetic) | *Drilled 8½ in. hole section to 12,450 ft MD. Performed flow check, well static. Circulated bottoms up. Pump pressure remained* |
+| **Prompt** | the report text only, with no hidden instructions |
+| **Selection rule** | top-p sampling: temperature 0.70, top-p 0.90, random seed 42 |
+| **Length** | until the model ends the sentence (maximum 40 tokens): 2 tokens |
+| **Result (sampling)** | `… Pump pressure remained` **` constant.`** |
+| **Result (greedy, same text)** | `… Pump pressure remained` **` constant at 1,000 psi.`** |
 
-The video always renders `data/generated/inference_trace.json`, which must be a sampling trace because the video explains temperature and top-p. After capturing a new trace, re-render; there is nothing to edit by hand.
+At step 2 the draw picked the **second-ranked** token `.` (41.0% chance) over ` at` (43.7%), ending the sentence where greedy decoding continues with "at 1,000 psi.". The video keeps that result as recorded. The stopping rule (stop when the model ends the sentence) was fixed before looking at any output. The full record is in [`data/generated/inference_trace.json`](data/generated/inference_trace.json).
 
-### Preview and render
+### About the report examples
 
-```bash
-scripts/preview_video.sh          # Remotion Studio
-scripts/render_video.sh           # → out/next_token_ddr.mp4
-node scripts/render_stills.mjs 1200 2800   # QA stills → out/stills/
-```
+The four examples in [`data/input/ddr_contexts.json`](data/input/ddr_contexts.json) (drilling, completions, well intervention, well integrity) are **synthetic: written for this project, not taken from any operator**. Real DDRs usually belong to the operator and are confidential. Synthetic text avoids exposing any real well, and lets us check that each example is operationally sound. The examples were written before any model output was seen, and none has been edited to steer the model.
 
-### Tests and checks
-
-```bash
-.venv/bin/python -m pytest        # 87 tests: maths, top-p vs Hugging Face, tokenization, schema and tamper detection, recompute from logits,
-                                  #   review regressions (incl. one top-p = 1 capture with the cached 0.5B model; deselect with -m 'not slow')
-npm test                          # 11 tests: loader serves the traces unchanged, rejects old/tampered/mismatched traces, keeps low-ranked selections visible
-npm run typecheck && npm run lint && .venv/bin/ruff check src tests
-```
+The drilling example was reworded once, for operational correctness. A flow check is done with the pumps off, so the original wording ("…Circulated bottoms up and performed flow check. Pump pressure remained") put a pump-pressure observation after it. The flow check now comes first. The new wording was fixed before re-running the model, and the earlier run is kept in release [v0.2.1](https://github.com/djimrastephane/llm-next-token-ddr/releases/tag/v0.2.1).
 
 ---
-
-## Repository layout
-
-```
-data/input/ddr_contexts.json          synthetic DDR examples
-data/generated/inference_trace*.json  captured traces (source of truth)
-src/inference/                        device.py · tokenizer_utils.py · sampling.py · schemas.py · capture_trace.py
-src/video/data/loadInferenceTrace.ts  the ONLY place the video reads model output
-src/video/components/                 ProbabilityChart/Bar, TokenChip, TopPNucleus, SelectionClaw, HUD, CodeEditor, …
-src/video/scenes/                     S1Question … S10Final
-tests/                                pytest suite
-scripts/                              capture / preview / render helpers
-```
-
-## What is simplified
-
-- The **"LOCAL LLM" block** and **selection claw** are labelled *CONCEPTUAL VIEW*. They don't depict real neural activity, and the claw's sweep is decorative: the actual choice is one weighted random draw.
-- The **code card** is labelled *SIMPLIFIED* pseudocode and is not the Hugging Face implementation.
-- Charts show the top 8 candidates. The share held by the rest of the vocabulary is printed below the chart.
 
 ## Limitations
 
-- A 1.5B-parameter general model has no drilling-domain training guarantees. Its continuations are plausible text, not engineering judgement.
-- The sentence-end rule is a heuristic applied to the generated text so far: `!`, `?` or a newline ends the sentence, and so does a `.` unless it follows a digit (possible decimal point) or a DDR abbreviation such as `in.`, `ft.` or `approx.`. In those cases generation continues.
-- The loop scene plays the first three later steps at full pace and the rest in fast-forward, to keep the video near 60 s.
+- A 1.5-billion-parameter general-purpose model has no drilling training guarantees. Its continuations are plausible text, not engineering judgement.
+- The model only sees the words of the report. It has no access to rig sensors, mud reports or well plans.
+- A run is repeatable on the same computer and software, but another computer can produce slightly different numbers and occasionally a different word.
+- The loop scene plays the later steps faster, to keep the video under a minute.
+
+---
+
+## For developers
+
+Installation, capturing new traces, rendering, the exact formulas, the trace format and the test suite are in **[DEVELOPMENT.md](DEVELOPMENT.md)**.
 
 ## Licence
 

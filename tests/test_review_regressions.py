@@ -119,7 +119,7 @@ def test_f6_wrapper_rejects_output(arg):
 def test_f7_node_requirement_documented():
     engines = json.loads((ROOT / "package.json").read_text())["engines"]["node"]
     assert engines == ">=22.12"
-    assert "Node 22.12+" in (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "Node 22.12+" in (ROOT / "DEVELOPMENT.md").read_text(encoding="utf-8")
 
 
 # F8: non-finite temperature / top-p rejected at the CLI and in the maths.
@@ -166,3 +166,15 @@ def test_committed_trace_matches_pinned_revision(sampling_trace):
 
     m = sampling_trace["metadata"]
     assert m["model_revision"] == PINNED_REVISIONS[m["model"]]
+
+
+# Documentation fidelity: the README's quoted results must match the committed traces.
+def test_readme_quotes_match_traces(sampling_trace, greedy_trace):
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert f"**{sampling_trace['generated_text'].strip()}**" in readme
+    assert f"**{greedy_trace['generated_text'].strip()}**" in readme
+    n_tokens = sum(t["in_display_context"] for t in sampling_trace["input_tokens"])
+    assert f"{n_tokens} tokens" in readme
+    sel = sampling_trace["steps"][1]["selected_token"]
+    assert f"{sel['sampling_probability'] * 100:.1f}% chance" in readme
+    assert sampling_trace["display_context"] in readme
