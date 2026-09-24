@@ -104,13 +104,13 @@ The full-vocabulary logits for every step are saved next to the trace as `*.logi
 ### Install
 
 ```bash
-# Python 3.11+
+# Python 3.11+ (exact tested versions are pinned in requirements.txt)
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # Node 22.12+ (required by the locked Vitest; 22.18 used here)
 npm install
 ```
 
-**Model download.** On first run, Hugging Face downloads `Qwen/Qwen2.5-1.5B-Instruct` (~3 GB) into `~/.cache/huggingface`. After that everything runs offline (`HF_HUB_OFFLINE=1`). Float32 needs ~7 GB of RAM; use `--dtype bfloat16` on smaller machines (this changes the logits slightly). The device is chosen automatically in the order CUDA → MPS → CPU (override with `--device`).
+**Model download.** On first run, Hugging Face downloads `Qwen/Qwen2.5-1.5B-Instruct` (~3 GB) into `~/.cache/huggingface`, at the pinned commit `989aa798…` so a later upstream update can't silently change the weights (override with `--revision`; other models default to their latest revision). Weights are loaded from safetensors files only, never from pickled `.bin` files. After that everything runs offline (`HF_HUB_OFFLINE=1`). Float32 needs ~7 GB of RAM; use `--dtype bfloat16` on smaller machines (this changes the logits slightly). The device is chosen automatically in the order CUDA → MPS → CPU (override with `--device`).
 
 ### Capture the traces
 
@@ -182,3 +182,7 @@ scripts/                              capture / preview / render helpers
 - The sentence-end rule is a heuristic applied to the generated text so far: `!`, `?` or a newline ends the sentence, and so does a `.` unless it follows a digit (possible decimal point) or a DDR abbreviation such as `in.`, `ft.` or `approx.`. In those cases generation continues.
 - The loop scene plays the first three later steps at full pace and the rest in fast-forward, to keep the video near 60 s.
 - The greedy trace is captured for comparison, but the current video renders only the sampling trace.
+
+## Licence
+
+Code and documentation: [MIT](LICENSE). The model, Qwen2.5-1.5B-Instruct, is released by the Qwen team under Apache 2.0 and is downloaded separately, not redistributed here.

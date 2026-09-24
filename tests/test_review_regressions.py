@@ -150,3 +150,19 @@ def test_f1_capture_top_p_one_end_to_end(tmp_path):
         pytest.skip(f"model not cached: {e}")
     validate_trace(json.loads(Path(out).read_text()))
     assert all(s["nucleus_complete"] is False for s in trace["steps"])
+
+
+# Hardening: the default model is loaded at a pinned commit; other models default to their latest revision.
+def test_default_model_revision_pinned():
+    from src.inference.capture_trace import DEFAULT_MODEL, PINNED_REVISIONS
+
+    assert parse_args([]).revision == PINNED_REVISIONS[DEFAULT_MODEL]
+    assert parse_args(["--model", "Qwen/Qwen2.5-0.5B-Instruct"]).revision is None
+    assert parse_args(["--revision", "abc123"]).revision == "abc123"
+
+
+def test_committed_trace_matches_pinned_revision(sampling_trace):
+    from src.inference.capture_trace import PINNED_REVISIONS
+
+    m = sampling_trace["metadata"]
+    assert m["model_revision"] == PINNED_REVISIONS[m["model"]]

@@ -30,6 +30,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONTEXTS = ROOT / "data" / "input" / "ddr_contexts.json"
 DEFAULT_OUTPUT = ROOT / "data" / "generated" / "inference_trace.json"
 DEFAULT_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
+# Pinned Hugging Face commit of the default model, so a later upstream update cannot change the weights.
+PINNED_REVISIONS = {DEFAULT_MODEL: "989aa7980e4cf806f80c7fef2b1adb7bc71aa306"}
 
 # Used only in chat-template mode. The DDR text is placed at the start of the assistant turn
 # so the model *continues* it rather than answering a question about it.
@@ -42,6 +44,11 @@ DTYPES = {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", default=DEFAULT_MODEL, help="Hugging Face causal LM id or local path")
+    p.add_argument(
+        "--revision",
+        default=None,
+        help="Hugging Face commit/branch to load (default: the pinned commit for the default model, else 'main')",
+    )
     p.add_argument("--mode", choices=["greedy", "sampling"], default="sampling")
     p.add_argument("--prompt-mode", choices=["raw-text", "chat-template"], default="raw-text")
     p.add_argument("--temperature", type=float, default=0.7, help="sampling only; must be > 0")
@@ -84,6 +91,8 @@ def parse_args(argv=None):
             p.error("--temperature must be > 0")
         if not 0 < args.top_p <= 1:
             p.error("--top-p must be in (0, 1]")
+    if args.revision is None:
+        args.revision = PINNED_REVISIONS.get(args.model)
     return args
 
 
@@ -188,8 +197,11 @@ def main(argv=None):
     rng = seed_everything(args.seed)
 
     print(f"[load] {args.model} on {device} ({args.dtype})", file=sys.stderr)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=DTYPES[args.dtype]).to(device)
+    tokenizer = AutoTokenizer.from_pretrained(args.model, revision=args.revision)
+    # safetensors only: never unpickle weight files (.bin) that could execute code.
+    model = AutoModelForCausalLM.from_pretrained(
+        args.model, revision=args.revision, dtype=DTYPES[args.dtype], use_safetensors=True
+    ).to(device)
     model.eval()
 
     input_ids, text_start = build_input_ids(tokenizer, ctx["text"], args.prompt_mode)
@@ -288,6 +300,7 @@ def main(argv=None):
             "model": args.model,
             "model_display_name": args.model.rstrip("/").split("/")[-1],
             "model_revision": getattr(model.config, "_commit_hash", None),
+            "revision_requested": args.revision,
             "tokenizer_vocab_size": len(tokenizer),  # logits may have extra unused padding rows beyond this
             "device": device.type,
             "dtype": args.dtype,

@@ -6,3 +6,5 @@ node_modules/
 out/
 *.logits.npz
 .DS_Store
+
+.idea/

@@ -3,10 +3,12 @@ name = "llm-next-token-ddr"
 version = "0.1.0"
 description = "Capture real next-token inference traces from a local LLM and animate them (Daily Drilling Report example)."
 requires-python = ">=3.11"
-dependencies = ["torch>=2.3", "transformers>=4.44", "numpy>=1.26"]
+# Compatible ranges; requirements.txt pins the exact tested versions. transformers 5 is required (dtype= argument).
+dependencies = ["torch>=2.14,<3", "transformers>=5.17,<6", "numpy>=2.4,<3", "safetensors>=0.8"]
+license = "MIT"
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=9.1", "ruff>=0.16"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

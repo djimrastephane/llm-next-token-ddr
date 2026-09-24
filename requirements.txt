@@ -1,5 +1,10 @@
-torch>=2.3
-transformers>=4.44
-numpy>=1.26
-pytest>=8.0
-ruff>=0.5
+# Exact versions the project was tested with (Python 3.11.9, macOS / Apple MPS).
+# Newer versions may work, but the recorded traces and "reproducible" claims apply to these.
+torch==2.14.0
+transformers==5.17.0
+tokenizers==0.23.2
+huggingface_hub==1.32.0
+safetensors==0.8.0
+numpy==2.4.6
+pytest==9.1.1
+ruff==0.16.8
