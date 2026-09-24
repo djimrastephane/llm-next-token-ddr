@@ -11,6 +11,7 @@ import { S5Temperature } from "../scenes/S5Temperature";
 import { S6TopP } from "../scenes/S6TopP";
 import { S7Selection } from "../scenes/S7Selection";
 import { S8Loop } from "../scenes/S8Loop";
+import { S8bCompare } from "../scenes/S8bCompare";
 import { S9Code } from "../scenes/S9Code";
 import { prog } from "../utils/anim";
 import { PAD } from "../utils/theme";
@@ -25,6 +26,7 @@ const SCENE_COMPONENTS: Record<SceneId, React.FC> = {
   topP: S6TopP,
   selection: S7Selection,
   loop: S8Loop,
+  compare: S8bCompare,
   code: S9Code,
   final: S10Final,
 };
@@ -38,9 +40,13 @@ function sinceChange(frame: number, fn: (f: number) => number, max = 45): number
 
 export const NextTokenVideo: React.FC = () => {
   const frame = useCurrentFrame();
-  const overlayIn = sceneStart("tokenization");
-  const overlayOut = sceneStart("final");
-  const overlay = Math.min(prog(frame, overlayIn, 16), 1 - prog(frame, overlayOut - 16, 16));
+  // HUD + DDR card: shown from tokenization to the end of the code scene, except during the comparison
+  // scene, which shows both runs with their own context.
+  const visible = (from: number, to: number) => Math.min(prog(frame, from, 16), 1 - prog(frame, to - 16, 16));
+  const overlay = Math.max(
+    visible(sceneStart("tokenization"), sceneStart("compare")),
+    visible(sceneStart("code"), sceneStart("final")),
+  );
   const flash = 1 - sinceChange(frame, appendedCount) / 45;
   const stepFlash = 1 - sinceChange(frame, hudStep) / 45;
   let from = 0;

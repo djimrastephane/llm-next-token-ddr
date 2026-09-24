@@ -31,6 +31,7 @@ export const SCENES = [
   { id: "topP", frames: 380 },
   { id: "selection", frames: 330 },
   { id: "loop", frames: loopStepStart(loopSteps) },
+  { id: "compare", frames: 360 },
   { id: "code", frames: 200 },
   { id: "final", frames: 380 },
 ] as const;

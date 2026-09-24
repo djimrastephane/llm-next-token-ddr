@@ -3,6 +3,7 @@
 // Components receive values from here; they never define candidate data themselves.
 
 import sampledTraceJson from "../../../data/generated/inference_trace.json";
+import greedyTraceJson from "../../../data/generated/inference_trace_greedy.json";
 import type { Candidate, InferenceTrace, Step } from "./types";
 
 const TOL = 1e-6;
@@ -107,3 +108,35 @@ export const ddrTokens = trace.input_tokens.filter((t) => t.in_display_context);
 
 /** Oil & Gas facts stated in the DDR text (NOT model parameters). */
 export const ddrFacts = trace.source_context.facts;
+
+/**
+ * Pair a greedy trace with the sampling trace for the comparison scene. They must come from the same
+ * context, model, revision and prompt mode, otherwise the comparison would be meaningless.
+ */
+export function loadComparison(sampling: InferenceTrace, greedyJson: unknown) {
+  const greedy = loadInferenceTrace(greedyJson);
+  if (greedy.metadata.generation_mode !== "greedy") fail("inference_trace_greedy.json is not a greedy trace");
+  const a = sampling.metadata;
+  const b = greedy.metadata;
+  if (
+    greedy.display_context !== sampling.display_context ||
+    a.model !== b.model ||
+    a.model_revision !== b.model_revision ||
+    a.prompt_mode !== b.prompt_mode
+  ) {
+    fail("greedy and sampling traces differ in context, model, revision or prompt mode");
+  }
+  // First step where the two runs selected different tokens (null if one is a prefix of the other).
+  const n = Math.min(greedy.steps.length, sampling.steps.length);
+  let diverge: number | null = null;
+  for (let i = 0; i < n; i++) {
+    if (greedy.steps[i].selected_token.token_id !== sampling.steps[i].selected_token.token_id) {
+      diverge = i;
+      break;
+    }
+  }
+  const identical = diverge === null && greedy.generated_text === sampling.generated_text;
+  return { greedy, diverge, identical };
+}
+
+export const comparison = loadComparison(trace, greedyTraceJson);

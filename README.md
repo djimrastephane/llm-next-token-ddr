@@ -2,7 +2,7 @@
 
 **When an LLM writes the next part of a drilling report, how does it decide what comes next?**
 
-This project answers that with a real experiment, not an illustration. A language model runs locally on a laptop. We give it the start of a Daily Drilling Report (DDR) entry, record exactly what it computes at each step, and turn that recording into a short vertical video (1080 × 1920, 60 fps). Its length follows the number of generated tokens: about 50 s for the current 2-token run, up to about 60 s for 10 tokens.
+This project answers that with a real experiment, not an illustration. A language model runs locally on a laptop. We give it the start of a Daily Drilling Report (DDR) entry, record exactly what it computes at each step, and turn that recording into a short vertical video (1080 × 1920, 60 fps). Its length follows the number of generated tokens: about 56 s for the current 2-token run. A comparison scene shows the greedy and sampling runs side by side, from the same context and model, and marks the first step where they diverge.
 
 > **All token candidates, probabilities, rankings, and selections shown in this project are captured from an actual local LLM inference run. They are not manually authored for the animation.**
 
@@ -151,7 +151,7 @@ node scripts/render_stills.mjs 1200 2800   # QA stills → out/stills/
 ```bash
 .venv/bin/python -m pytest        # 87 tests: maths, top-p vs Hugging Face, tokenization, schema and tamper detection, recompute from logits,
                                   #   review regressions (incl. one top-p = 1 capture with the cached 0.5B model; deselect with -m 'not slow')
-npm test                          # 9 tests: loader serves the trace unchanged, rejects old/tampered traces, keeps low-ranked selections visible
+npm test                          # 11 tests: loader serves the traces unchanged, rejects old/tampered/mismatched traces, keeps low-ranked selections visible
 npm run typecheck && npm run lint && .venv/bin/ruff check src tests
 ```
 
@@ -181,7 +181,6 @@ scripts/                              capture / preview / render helpers
 - A 1.5B-parameter general model has no drilling-domain training guarantees. Its continuations are plausible text, not engineering judgement.
 - The sentence-end rule is a heuristic applied to the generated text so far: `!`, `?` or a newline ends the sentence, and so does a `.` unless it follows a digit (possible decimal point) or a DDR abbreviation such as `in.`, `ft.` or `approx.`. In those cases generation continues.
 - The loop scene plays the first three later steps at full pace and the rest in fast-forward, to keep the video near 60 s.
-- The greedy trace is captured for comparison, but the current video renders only the sampling trace.
 
 ## Licence
 

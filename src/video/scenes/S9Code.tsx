@@ -40,7 +40,7 @@ export const S9Code: React.FC = () => {
   return (
     <AbsoluteFill style={{ opacity: sceneFade(f, sceneFrames("code")), fontFamily: FONT_UI }}>
       <div style={{ position: "absolute", top: STAGE_TOP, left: STAGE_LEFT, width: CONTENT_W }}>
-        <SceneTitle kicker="08 · THE LOOP IN CODE" title="Simplified generation logic" />
+        <SceneTitle kicker="09 · THE LOOP IN CODE" title="Simplified generation logic" />
         <div style={{ ...rise(f, 8), marginTop: 36 }}>
           <CodeEditor file="llm_generate.py" lines={LINES} typed={typed} active={active} width={CONTENT_W} />
         </div>

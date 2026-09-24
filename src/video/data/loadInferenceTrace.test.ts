@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { appendedTexts, displayCandidates, firstStep, loadInferenceTrace, provenance, provenanceFor, trace, withSelected } from "./loadInferenceTrace";
+import { appendedTexts, comparison, displayCandidates, loadComparison, firstStep, loadInferenceTrace, provenance, provenanceFor, trace, withSelected } from "./loadInferenceTrace";
 
 const file = JSON.parse(readFileSync("data/generated/inference_trace.json", "utf-8"));
 
@@ -78,5 +78,28 @@ describe("review regressions", () => {
     const custom = structuredClone(file);
     custom.source_context.synthetic = "yes";
     expect(() => loadInferenceTrace(custom)).toThrow(/synthetic/);
+  });
+});
+
+describe("greedy vs sampling comparison", () => {
+  const greedyFile = JSON.parse(readFileSync("data/generated/inference_trace_greedy.json", "utf-8"));
+
+  it("pairs the committed traces and finds the first differing step from the data", () => {
+    const expected = file.steps.findIndex(
+      (s: { selected_token: { token_id: number } }, i: number) => s.selected_token.token_id !== greedyFile.steps[i]?.selected_token.token_id,
+    );
+    expect(comparison.diverge).toBe(expected === -1 ? null : expected);
+    expect(comparison.greedy.generated_text).toBe(greedyFile.generated_text);
+    expect(comparison.greedy.steps.every((s) => s.selected_token.rank === 1)).toBe(true);
+  });
+
+  it("refuses to compare runs from different contexts or models", () => {
+    const otherContext = structuredClone(greedyFile);
+    otherContext.display_context = "Something else";
+    expect(() => loadComparison(trace, otherContext)).toThrow();
+    const otherModel = structuredClone(greedyFile);
+    otherModel.metadata.model = "another/model";
+    expect(() => loadComparison(trace, otherModel)).toThrow(/differ/);
+    expect(() => loadComparison(trace, structuredClone(file))).toThrow(/not a greedy trace/);
   });
 });
